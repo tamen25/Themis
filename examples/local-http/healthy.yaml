@@ -1,0 +1,27 @@
+schemaVersion: themis.contract/v1alpha1
+metadata:
+  name: local-http-health
+  owner: themis-demo
+spec:
+  target:
+    kind: local-http
+    name: disposable-demo
+    url: http://127.0.0.1:8080/health
+  execution:
+    maxDuration: 12s
+    maxConcurrentFaults: 0
+    requireApproval: false
+  scenario:
+    id: baseline-health
+    phases:
+      - name: observe
+        duration: 10s
+  assertions:
+    - id: readiness
+      type: http-ready
+      minSamples: 1
+      deadline: 2s
+    - id: error-rate
+      type: http-success-rate
+      minSamples: 100
+      maximumErrorFraction: 0.03

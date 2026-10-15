@@ -1,0 +1,116 @@
+{
+  "planDigest": "sha256:1e90d752e76b72db8a65592b49ba7ed3a1e79fb4a403c0b0b319a28d7a242b80",
+  "plan": {
+    "schemaVersion": "themis.plan/v1alpha1",
+    "plannerVersion": "themis.planner/t0-v2",
+    "executionPolicy": "themis.local-http/t0-v1",
+    "contractDigest": "sha256:c7fa149f757d2d406b953f5704ab5b99d42b2c075d4bffb099c546b39b08bbfc",
+    "contract": {
+      "schemaVersion": "themis.contract/v1alpha1",
+      "metadata": {
+        "name": "local-checkout",
+        "owner": "payments-platform",
+        "labels": {
+          "environment": "isolated-test"
+        }
+      },
+      "spec": {
+        "target": {
+          "kind": "local-http",
+          "name": "checkout-api",
+          "url": "http://127.0.0.1:8080/health"
+        },
+        "execution": {
+          "profile": "local",
+          "maxDuration": "1m0s",
+          "maxConcurrentFaults": 0,
+          "requireApproval": true
+        },
+        "scenario": {
+          "id": "baseline-health",
+          "phases": [
+            {
+              "name": "baseline",
+              "duration": "30s"
+            }
+          ]
+        },
+        "assertions": [
+          {
+            "id": "ready",
+            "type": "http-ready",
+            "required": true,
+            "minSamples": 1,
+            "deadline": "10s"
+          },
+          {
+            "id": "success-rate",
+            "type": "http-success-rate",
+            "required": true,
+            "minSamples": 100,
+            "maximumErrorFraction": 0.03
+          }
+        ],
+        "evidence": {
+          "includeRawTraces": false,
+          "requireSignature": false
+        }
+      }
+    },
+    "mode": "planning-only",
+    "executionAllowed": false,
+    "targetIdentity": "declared-only; no runtime identity resolved",
+    "bounds": {
+      "profile": "local",
+      "maxDuration": "1m0s",
+      "maxConcurrentFaults": 0,
+      "requireApproval": true
+    },
+    "safety": {
+      "profile": "local",
+      "requireApproval": true,
+      "admission": "not-requested",
+      "requirements": [
+        "Only the declared literal loopback endpoint is in scope.",
+        "No fault, resource mutation, raw trace collection or signature is supported.",
+        "The local runner independently admits this exact loopback endpoint under the versioned execution policy.",
+        "Approval, when required, must bind to this exact plan digest; a plan is not authorization."
+      ]
+    },
+    "checks": [
+      {
+        "assertion": {
+          "id": "ready",
+          "type": "http-ready",
+          "required": true,
+          "minSamples": 1,
+          "deadline": "10s"
+        },
+        "support": "local-http runner; separate admission required",
+        "explanation": "Would require successful HTTP responses (minimum 1) by 10s from scenario start."
+      },
+      {
+        "assertion": {
+          "id": "success-rate",
+          "type": "http-success-rate",
+          "required": true,
+          "minSamples": 100,
+          "maximumErrorFraction": 0.03
+        },
+        "support": "local-http runner; separate admission required",
+        "explanation": "Would require at least 100 HTTP samples across the scenario with error fraction \u003c= 0.03."
+      }
+    ],
+    "explanation": [
+      "This command only validates and describes a contract; it sends no HTTP requests and writes no files.",
+      "The run command observes declared phases in order: one sequential GET slot per 100ms, no catch-up bursts, no early success.",
+      "Requests have a 1s timeout capped by the phase deadline, a 16KiB response-header limit, no body collection, redirects or environment proxies.",
+      "2xx responses succeed; HTTP errors, TLS/network failures and request timeouts are unsuccessful probes. Cancellation leaves missing evidence.",
+      "Coverage requires every scheduled slot and the complete observation window. Impossible minimum sample counts are denied before execution.",
+      "Thresholds use the normalized v1alpha1 decimal; count ratios are compared exactly without rounding or tolerance.",
+      "Only required assertions determine the verdict; missing observations and tool errors cannot establish PASS.",
+      "No intervention is requested. The HTTP-only run creates no fault resources requiring cleanup.",
+      "Target ownership, runtime identity, connectivity and actual workload health remain unverified."
+    ]
+  }
+}

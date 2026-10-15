@@ -1,0 +1,11 @@
+# Expected: exit 4. Observation phases exceed the declared run limit.
+schemaVersion: themis.contract/v1alpha1
+metadata: {name: invalid-budget, owner: platform}
+spec:
+  target: {kind: local-http, name: demo, url: 'http://127.0.0.1:8080/'}
+  execution: {maxDuration: 5s}
+  scenario:
+    id: excessive-budget
+    phases: [{name: baseline, duration: 30s}]
+  assertions:
+    - {id: ready, type: http-ready, deadline: 5s}

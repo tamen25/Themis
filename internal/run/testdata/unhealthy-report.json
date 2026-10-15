@@ -1,0 +1,38 @@
+{
+  "schemaVersion": "themis.run/v1alpha1",
+  "runID": "run-1234567890",
+  "contractName": "local-http-health",
+  "contractDigest": "sha256:21dfcd83dc4834058e92dbfdf2306a0e58108a5682601a169263814d282220e4",
+  "planDigest": "sha256:d9a5bd23407c1e80b62a13067ad3bd1058711059bd489bee87a48ec60a3d9171",
+  "policyVersion": "themis.local-http/t0-v1",
+  "journalDigest": "sha256:c11da3702be669008c12d81c39a47fdf35825c53db6721f318a5975aff021ad6",
+  "target": {
+    "kind": "local-http",
+    "name": "demo",
+    "url": "http://127.0.0.1:8080/health"
+  },
+  "startedAt": "2026-10-15T00:00:00Z",
+  "elapsedNS": 200000000,
+  "samples": 2,
+  "expectedSamples": 2,
+  "coverage": "SUFFICIENT",
+  "execution": {
+    "status": "SUCCEEDED"
+  },
+  "assertions": [
+    {
+      "id": "readiness",
+      "verdict": "FAIL",
+      "evidence": "SUFFICIENT",
+      "reason": "0 successful responses by 200ms; minimum 1"
+    },
+    {
+      "id": "error-rate",
+      "verdict": "FAIL",
+      "evidence": "SUFFICIENT",
+      "reason": "2/2 unsuccessful probes; maximum error fraction 0.03"
+    }
+  ],
+  "verdict": "FAIL",
+  "signed": false
+}

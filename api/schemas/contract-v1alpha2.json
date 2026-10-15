@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.themis.invalid/contract/v1alpha2",
+  "title": "Experimental owned local latency experiment",
+  "type": "object", "additionalProperties": false,
+  "required": ["schemaVersion", "metadata", "spec"],
+  "properties": {
+    "schemaVersion": {"const": "themis.contract/v1alpha2"},
+    "metadata": {
+      "type": "object", "additionalProperties": false, "required": ["name", "owner"],
+      "properties": {
+        "name": {"$ref": "#/$defs/name"},
+        "owner": {"type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[A-Za-z0-9][A-Za-z0-9_.@/-]*$"},
+        "labels": {"type": "object", "maxProperties": 32, "propertyNames": {"$ref": "#/$defs/name"}, "additionalProperties": {"type": "string", "maxLength": 128}}
+      }
+    },
+    "spec": {
+      "type": "object", "additionalProperties": false,
+      "required": ["target", "execution", "baseline", "fault", "observation", "recovery", "assertions", "evidence", "cleanup"],
+      "properties": {
+        "target": {"type": "object", "additionalProperties": false, "required": ["kind", "fixture"], "properties": {"kind": {"const": "owned-local-http"}, "fixture": {"$ref": "#/$defs/name"}}},
+        "execution": {"type": "object", "additionalProperties": false, "required": ["profile", "maxDuration", "maxConcurrentFaults"], "properties": {"profile": {"const": "owned-local-test"}, "maxDuration": {"$ref": "#/$defs/duration"}, "maxConcurrentFaults": {"const": 1}}},
+        "baseline": {"$ref": "#/$defs/phase"},
+        "fault": {"type": "object", "additionalProperties": false, "required": ["type", "latency", "duration"], "properties": {"type": {"const": "http.response-latency"}, "latency": {"$ref": "#/$defs/duration"}, "duration": {"$ref": "#/$defs/duration"}}},
+        "observation": {"type": "object", "additionalProperties": false, "required": ["samples", "minConfirmed"], "properties": {"samples": {"$ref": "#/$defs/samples"}, "minConfirmed": {"type": "integer", "minimum": 3, "maximum": 20}}},
+        "recovery": {"$ref": "#/$defs/phase"},
+        "assertions": {"type": "object", "additionalProperties": false, "required": ["maximumErrorFraction"], "properties": {"maximumErrorFraction": {"type": "number", "minimum": 0, "maximum": 1}}},
+        "evidence": {"type": "object", "additionalProperties": false, "required": ["intervention", "rawResponses"], "properties": {"intervention": {"const": "independent-client"}, "rawResponses": {"const": false}}},
+        "cleanup": {"type": "object", "additionalProperties": false, "required": ["required", "timeout"], "properties": {"required": {"const": true}, "timeout": {"$ref": "#/$defs/duration"}}}
+      }
+    }
+  },
+  "$defs": {
+    "name": {"type": "string", "minLength": 1, "maxLength": 63, "pattern": "^[a-z0-9]([a-z0-9-]*[a-z0-9])?$"},
+    "duration": {"type": "string", "minLength": 1, "maxLength": 32},
+    "samples": {"type": "integer", "minimum": 3, "maximum": 20},
+    "phase": {"type": "object", "additionalProperties": false, "required": ["duration", "samples"], "properties": {"duration": {"$ref": "#/$defs/duration"}, "samples": {"$ref": "#/$defs/samples"}}}
+  }
+}

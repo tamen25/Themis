@@ -1,0 +1,6 @@
+/bin/
+/.cache/
+/.themis/
+/coverage.out
+*.test
+*.test.exe

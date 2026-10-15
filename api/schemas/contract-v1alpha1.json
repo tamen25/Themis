@@ -1,0 +1,125 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.themis.invalid/contract/v1alpha1",
+  "title": "Themis T0 reliability contract",
+  "description": "Local HTTP observation subset. Duration, endpoint, uniqueness and budget checks also run in Go.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "metadata", "spec"],
+  "properties": {
+    "schemaVersion": {"const": "themis.contract/v1alpha1"},
+    "metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "owner"],
+      "properties": {
+        "name": {"$ref": "#/$defs/name"},
+        "owner": {"type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[A-Za-z0-9][A-Za-z0-9_.@/-]*$"},
+        "labels": {
+          "type": "object",
+          "maxProperties": 32,
+          "propertyNames": {"type": "string", "minLength": 1, "maxLength": 63, "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*$"},
+          "additionalProperties": {"type": "string", "maxLength": 128},
+          "default": {}
+        }
+      }
+    },
+    "spec": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["target", "execution", "scenario", "assertions"],
+      "properties": {
+        "target": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "name", "url"],
+          "properties": {
+            "kind": {"const": "local-http"},
+            "name": {"$ref": "#/$defs/name"},
+            "url": {"type": "string", "minLength": 1, "maxLength": 2048}
+          }
+        },
+        "execution": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["maxDuration"],
+          "properties": {
+            "profile": {"const": "local", "default": "local"},
+            "maxDuration": {"$ref": "#/$defs/duration"},
+            "maxConcurrentFaults": {"type": "integer", "const": 0, "default": 0},
+            "requireApproval": {"type": "boolean", "default": true}
+          }
+        },
+        "scenario": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id", "phases"],
+          "properties": {
+            "id": {"$ref": "#/$defs/name"},
+            "phases": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 16,
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["name", "duration"],
+                "properties": {
+                  "name": {"$ref": "#/$defs/name"},
+                  "duration": {"$ref": "#/$defs/duration"}
+                }
+              }
+            }
+          }
+        },
+        "assertions": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 64,
+          "items": {
+            "oneOf": [
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["id", "type", "deadline"],
+                "properties": {
+                  "id": {"$ref": "#/$defs/name"},
+                  "type": {"const": "http-ready"},
+                  "required": {"type": "boolean", "default": true},
+                  "minSamples": {"$ref": "#/$defs/samples", "default": 1},
+                  "deadline": {"$ref": "#/$defs/duration"}
+                }
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["id", "type", "minSamples", "maximumErrorFraction"],
+                "properties": {
+                  "id": {"$ref": "#/$defs/name"},
+                  "type": {"const": "http-success-rate"},
+                  "required": {"type": "boolean", "default": true},
+                  "minSamples": {"$ref": "#/$defs/samples"},
+                  "maximumErrorFraction": {"type": "number", "minimum": 0, "maximum": 1}
+                }
+              }
+            ]
+          }
+        },
+        "evidence": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "includeRawTraces": {"type": "boolean", "const": false, "default": false},
+            "requireSignature": {"type": "boolean", "const": false, "default": false}
+          },
+          "default": {"includeRawTraces": false, "requireSignature": false}
+        }
+      }
+    }
+  },
+  "$defs": {
+    "name": {"type": "string", "minLength": 1, "maxLength": 63, "pattern": "^[a-z0-9]([a-z0-9-]*[a-z0-9])?$"},
+    "duration": {"type": "string", "minLength": 1, "maxLength": 32},
+    "samples": {"type": "integer", "minimum": 1, "maximum": 100000}
+  }
+}

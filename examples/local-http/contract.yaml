@@ -1,0 +1,35 @@
+schemaVersion: themis.contract/v1alpha1
+metadata:
+  name: local-checkout
+  owner: payments-platform
+  labels:
+    environment: isolated-test
+spec:
+  target:
+    kind: local-http
+    name: checkout-api
+    url: http://127.0.0.1:8080/health
+  execution:
+    profile: local
+    maxDuration: 1m
+    maxConcurrentFaults: 0
+    requireApproval: true
+  scenario:
+    id: baseline-health
+    phases:
+      - name: baseline
+        duration: 30s
+  assertions:
+    - id: ready
+      type: http-ready
+      required: true
+      minSamples: 1
+      deadline: 10s
+    - id: success-rate
+      type: http-success-rate
+      required: true
+      minSamples: 100
+      maximumErrorFraction: 0.03
+  evidence:
+    includeRawTraces: false
+    requireSignature: false

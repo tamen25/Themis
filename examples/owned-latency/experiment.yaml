@@ -1,0 +1,34 @@
+# Experimental T1.1: the target must be created by `themis fixture start`.
+schemaVersion: themis.contract/v1alpha2
+metadata:
+  name: local-latency
+  owner: themis-demo
+spec:
+  target:
+    kind: owned-local-http
+    fixture: demo
+  execution:
+    profile: owned-local-test
+    maxDuration: 10s
+    maxConcurrentFaults: 1
+  baseline:
+    duration: 600ms
+    samples: 4
+  fault:
+    type: http.response-latency
+    latency: 200ms
+    duration: 2s
+  observation:
+    samples: 4
+    minConfirmed: 3
+  recovery:
+    duration: 600ms
+    samples: 4
+  assertions:
+    maximumErrorFraction: 0.03
+  evidence:
+    intervention: independent-client
+    rawResponses: false
+  cleanup:
+    required: true
+    timeout: 2s

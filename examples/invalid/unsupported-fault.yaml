@@ -1,0 +1,14 @@
+# Expected: exit 4. T0 does not accept fault declarations.
+schemaVersion: themis.contract/v1alpha1
+metadata: {name: invalid-fault, owner: platform}
+spec:
+  target: {kind: local-http, name: demo, url: 'http://127.0.0.1:8080/'}
+  execution: {maxDuration: 1m}
+  scenario:
+    id: unsupported-fault
+    phases:
+      - name: intervention
+        duration: 10s
+        fault: {type: network.latency, latency: 250ms, duration: 10s}
+  assertions:
+    - {id: ready, type: http-ready, deadline: 5s}
