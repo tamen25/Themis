@@ -137,3 +137,12 @@ The new experiment journal/report versions are v1alpha2, while contract/plan
 formats and policy/adapter bounds remain unchanged. Legacy v1alpha1 experiment
 journals have their own transition rules and report shape. See
 [T020–T022](adr/README.md) and [lifecycle details](experiment-lifecycle.md).
+
+## Kubernetes dry-run boundary
+
+T2.0 has its own API projection/policy in `api/kubernetes` and `internal/kube`.
+`cmd/themis-controller` watches one namespace and writes only VerificationRun
+status. Fresh API reads feed immutable planning; no local fixture grant or OS
+lock becomes cluster authority. The runner/observation/assertion path is uninvoked,
+so a preview remains NOT_RUN. [Kubernetes architecture](kubernetes.md) and ADRs
+T023-T028 describe UID pins, RBAC, versioning and future authorization requirements.

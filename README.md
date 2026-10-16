@@ -12,6 +12,13 @@ under damaged journals, explicit operation diagnostics and evidence provenance.
 See [lifecycle and recovery](docs/experiment-lifecycle.md) and the
 [T1.2 validation matrix](docs/t12-test-matrix.md).
 
+Experimental T2.0 adds a separate Kubernetes controller for deterministic **dry-run
+previews only**, namespaced VerificationRuns, independent safety policy and narrow
+RBAC. Kubernetes faults and reliability assertion execution are unsupported;
+preview verdicts stay NOT_RUN or INCONCLUSIVE. See
+[Kind setup and API limits](docs/kubernetes.md) and the
+[Kubernetes threat model](docs/kubernetes-security.md).
+
 ## Build and use
 
 Requires Go 1.26.9 or newer. No cluster, cloud account, database, Docker, Argus or
@@ -174,13 +181,14 @@ go test ./internal/contract -run '^$' -fuzz '^FuzzParse$' -fuzztime 10s
 go test ./internal/result -run '^$' -fuzz '^FuzzAggregateNeverFalsePass$' -fuzztime 10s
 go test ./internal/run -run '^$' -fuzz '^FuzzReplay$' -fuzztime 10s
 go test ./internal/experiment -run '^$' -fuzz '^FuzzReplayExperiment$' -fuzztime 10s
+go test ./internal/kube -run '^$' -fuzz '^FuzzDryRunSpec$' -fuzztime 10s
 go run golang.org/x/vuln/cmd/govulncheck@v1.9.0 ./...
 ```
 
 The race detector requires a supported C toolchain and CGO. GNU Make targets
 include `build`, `fmt`, `fmt-check`, `vet`, `test`, `race`, `fuzz` and `check`.
 `fmt-check` requires a POSIX shell; native Windows users can run
-`gofmt -l cmd internal api/schemas examples` and require empty output and exit 0.
+`gofmt -l cmd internal api examples test` and require empty output and exit 0.
 
 CI checks formatting, dependency integrity, `go vet`, tests and builds on Linux,
 Windows and macOS; Linux also runs race tests, short fuzz campaigns and a

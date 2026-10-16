@@ -1,0 +1,21 @@
+apiVersion: verification.themis.dev/v1alpha1
+kind: VerificationRun
+metadata:
+  name: synthetic-preview
+  namespace: themis-test
+spec:
+  schemaVersion: themis.kubernetes-run/v1alpha1
+  executionProfile: kind-dry-run
+  contract:
+    schemaVersion: themis.kubernetes-contract/v1alpha1
+    name: synthetic-readiness
+    assertion: DeploymentAvailable
+    minReplicas: 1
+  target:
+    apiVersion: apps/v1
+    kind: Deployment
+    namespace: themis-test
+    name: synthetic
+    # Bind the actual UID/generation; scripts/kind-up.ps1 creates this example.
+    uid: REPLACE_WITH_ACTUAL_DEPLOYMENT_UID
+    generation: 1

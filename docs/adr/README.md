@@ -22,3 +22,9 @@ requirements in a record do not imply an existing execution component.
 | [T020](T020-intent-and-artifact-versions.md) | Prerequisites before durable intent and version-aware replay |
 | [T021](T021-local-cancellation-protocol.md) | Cross-process action coordination and permanent worker fence |
 | [T022](T022-provenance-and-operation-diagnostics.md) | Explicit provenance, bounded recovery and storage diagnostics |
+| [T023](T023-kubernetes-api-boundary.md) | Namespaced Kubernetes projection and separate controller |
+| [T024](T024-kubernetes-ownership-rbac.md) | Status ownership and narrow RBAC |
+| [T025](T025-kubernetes-safety-model.md) | Kubernetes dry-run safety and future authorization |
+| [T026](T026-kubernetes-target-identity.md) | Immutable target identity and deterministic plans |
+| [T027](T027-kubernetes-reconciliation-status.md) | Idempotent status and latched invalidation |
+| [T028](T028-kubernetes-dry-run-only.md) | No Kubernetes assertion or fault execution |

@@ -1,7 +1,8 @@
 # Contributing
 
-The current development target is the T1.2 owned-local experiment lifecycle,
-alongside the compatible T0 CLI. Start with the
+The development scope includes the T1.2 local foundation and T2.0 dry-run
+Kubernetes projection. Read [the Kubernetes scope and real API tests](docs/kubernetes.md)
+before changing the controller. Start with the
 [README](README.md), [contract rules](docs/contracts.md) and
 [ADRs](docs/adr/README.md). Discuss changes to the contract format or verdict
 semantics in an issue before submitting a large patch.

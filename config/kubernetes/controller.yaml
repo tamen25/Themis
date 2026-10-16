@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: themis-controller
+  namespace: themis-test
+spec:
+  replicas: 1
+  strategy: {type: Recreate}
+  selector:
+    matchLabels: {app: themis-controller}
+  template:
+    metadata:
+      labels: {app: themis-controller}
+    spec:
+      serviceAccountName: themis-controller
+      securityContext: {runAsNonRoot: true, runAsUser: 65532, seccompProfile: {type: RuntimeDefault}}
+      containers:
+        - name: controller
+          image: themis-controller:t2.0
+          imagePullPolicy: Never
+          args: ['--namespace=themis-test', '--cluster-uid=$(CLUSTER_UID)', '--namespace-uid=$(NAMESPACE_UID)']
+          env:
+            - name: CLUSTER_UID
+              valueFrom: {configMapKeyRef: {name: themis-controller-pins, key: clusterUID}}
+            - name: NAMESPACE_UID
+              valueFrom: {configMapKeyRef: {name: themis-controller-pins, key: namespaceUID}}
+          ports: [{name: health, containerPort: 8081}]
+          readinessProbe: {httpGet: {path: /readyz, port: health}, initialDelaySeconds: 1}
+          livenessProbe: {httpGet: {path: /healthz, port: health}, initialDelaySeconds: 5}
+          resources:
+            requests: {cpu: 50m, memory: 64Mi}
+            limits: {cpu: 500m, memory: 192Mi}
+          securityContext: {allowPrivilegeEscalation: false, readOnlyRootFilesystem: true, capabilities: {drop: [ALL]}}

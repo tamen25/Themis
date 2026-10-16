@@ -27,7 +27,7 @@ jobs:
       - name: Check formatting
         shell: bash
         run: |
-          files=$(gofmt -l cmd internal api/schemas examples)
+          files=$(gofmt -l cmd internal api examples test)
           if [ -n "$files" ]; then
             printf '%s\n' "$files"
             exit 1
@@ -44,7 +44,7 @@ jobs:
       - name: Unit and integration tests
         run: go test ./...
       - name: Build
-        run: go build -trimpath -o bin/ ./cmd/themis
+        run: go build -trimpath -o bin/ ./cmd/...
       - name: Race detector
         if: runner.os == 'Linux'
         run: go test -race ./...
@@ -63,3 +63,37 @@ jobs:
       - name: Fuzz experiment replay
         if: runner.os == 'Linux'
         run: go test ./internal/experiment -run '^$' -fuzz '^FuzzReplayExperiment$' -fuzztime 10s
+      - name: Fuzz Kubernetes dry-run input
+        if: runner.os == 'Linux'
+        run: go test ./internal/kube -run '^$' -fuzz '^FuzzDryRunSpec$' -fuzztime 10s
+
+  kind-dry-run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@4b73464bb391d4059bd26b0524d20df3927bd417
+        with:
+          go-version: '1.26.x'
+      - name: Install pinned Kind
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force .cache/tools | Out-Null
+          $env:GOBIN = (Resolve-Path .cache/tools).Path
+          go install sigs.k8s.io/kind@v0.32.0
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Create owned disposable cluster
+        shell: pwsh
+        run: ./scripts/kind-up.ps1
+      - name: Real API and controller tests
+        shell: pwsh
+        run: |
+          $env:THEMIS_KIND_KUBECONFIG = (Resolve-Path .themis/kind-t20/kubeconfig).Path
+          go test -count=1 -v ./test/kubernetes
+          exit $LASTEXITCODE
+      - name: Tear down owned cluster
+        if: always()
+        shell: pwsh
+        run: ./scripts/kind-down.ps1

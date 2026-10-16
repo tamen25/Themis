@@ -1,0 +1,25 @@
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicy
+metadata:
+  name: themis-t20-dry-run-scope
+spec:
+  failurePolicy: Fail
+  matchConstraints:
+    resourceRules:
+      - apiGroups: [verification.themis.dev]
+        apiVersions: [v1alpha1]
+        operations: [CREATE, UPDATE]
+        resources: [verificationruns]
+        scope: Namespaced
+  validations:
+    - expression: request.namespace == 'themis-test' && object.spec.target.namespace == request.namespace
+      message: Themis T2.0 permits only same-namespace requests in themis-test.
+      reason: Forbidden
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicyBinding
+metadata:
+  name: themis-t20-dry-run-scope
+spec:
+  policyName: themis-t20-dry-run-scope
+  validationActions: [Deny]

@@ -107,3 +107,20 @@ these artifacts must not authorize remote release gates. HTTP control v2 also
 authenticates response status, preventing an unsigned status change from being
 treated as a verified denial. Old live fixture controls are not migrated in place;
 allow their bounded expiry and create a new fixture with the new binary.
+
+## Experimental Kubernetes dry-run boundary
+
+T2.0 accepts one namespaced VerificationRun API in a separately created owned
+Kind environment. Closed bounded specs, fail-closed namespace admission, trusted
+UID pins and independent policy precede planning. Local fixture capabilities are
+never Kubernetes authorization. Runtime permissions allow only status writes,
+run reads, Deployment get and exact-name Namespace identity reads. No pod deletion,
+target patch, fault resource or execution Job is permitted by its service account.
+
+Preview verdicts are NOT_RUN or INCONCLUSIVE; the status schema excludes PASS and
+executionAllowed=true. Previews are unsigned, subject to cross-object read races
+and not execution attestation. Invalidated runs require a new request. Namespace
+allowlisting alone is not future fault authorization. Installer privileges, Docker
+operator access and status forgery risks are documented in the
+[Kubernetes threat model](docs/kubernetes-security.md). No production or T2.1
+fault execution is implemented or authorized.

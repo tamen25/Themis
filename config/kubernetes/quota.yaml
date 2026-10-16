@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: themis-test-budget
+  namespace: themis-test
+spec:
+  hard:
+    count/verificationruns.verification.themis.dev: '32'
+    count/deployments.apps: '4'
+    pods: '8'
+    configmaps: '8'
+    secrets: '8'
