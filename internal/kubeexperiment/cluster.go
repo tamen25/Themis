@@ -50,9 +50,15 @@ type Cluster struct {
 	StateDirectory string
 	Reader         client.Client
 	config         *rest.Config
+	// Tests may replace only transport creation; admission still uses Reader.
+	forwardPod func(context.Context, string) (*Session, error)
 }
 
 func Open(ctx context.Context, stateDirectory string) (*Cluster, error) {
+	return openCluster(ctx, stateDirectory, true)
+}
+
+func openCluster(ctx context.Context, stateDirectory string, check bool) (*Cluster, error) {
 	var owner Ownership
 	if err := localstate.Read(filepath.Join(stateDirectory, "execution-owner.json"), &owner); err != nil {
 		return nil, err
@@ -88,9 +94,11 @@ func Open(ctx context.Context, stateDirectory string) (*Cluster, error) {
 	if err != nil {
 		return nil, err
 	}
-	cluster := &Cluster{owner, stateDirectory, c, config}
-	if err = cluster.CheckEnvironment(ctx); err != nil {
-		return nil, err
+	cluster := &Cluster{Owner: owner, StateDirectory: stateDirectory, Reader: c, config: config}
+	if check {
+		if err = cluster.CheckEnvironment(ctx); err != nil {
+			return nil, err
+		}
 	}
 	return cluster, nil
 }
@@ -203,6 +211,9 @@ type Session struct {
 func (s *Session) Close() { s.once.Do(func() { close(s.stop); s.Client.Close() }) }
 
 func (c *Cluster) forward(ctx context.Context, podName string) (*Session, error) {
+	if c.forwardPod != nil {
+		return c.forwardPod(ctx, podName)
+	}
 	transport, upgrader, err := spdy.RoundTripperFor(c.config)
 	if err != nil {
 		return nil, err

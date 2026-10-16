@@ -6,6 +6,7 @@ import (
 )
 
 const ReportVersion = "themis.kubernetes-experiment-report/v1alpha1"
+const LifecycleReportVersion = "themis.kubernetes-experiment-report/v1alpha2"
 
 type Report struct {
 	Version               string                   `json:"version"`
@@ -24,6 +25,7 @@ type Report struct {
 	Assertions            []result.AssertionResult `json:"assertions"`
 	Provenance            Provenance               `json:"provenance"`
 	Unknowns              []string                 `json:"unknowns"`
+	CancellationAccepted  bool                     `json:"cancellationAccepted,omitempty"`
 }
 type Provenance struct {
 	Source               string `json:"source"`
@@ -88,6 +90,9 @@ func assess(events []Event, locallyAuthorized bool) Report {
 		return r
 	}
 	r.Plan = *events[0].Plan
+	if events[0].Version == LifecycleJournalVersion {
+		r.Version = LifecycleReportVersion
+	}
 	r.PlanDigest = r.Plan.Digest()
 	r.Authorization = *events[0].Authorization
 	notAttempted := false
@@ -169,6 +174,9 @@ func assess(events []Event, locallyAuthorized bool) Report {
 				r.FaultAttempted = e.Attempted
 			}
 			phase = "aborted"
+		case "CANCEL_ACCEPTED":
+			r.CancellationAccepted = true
+			aborted = true
 		case "FINAL":
 			if final {
 				valid = false
@@ -178,6 +186,9 @@ func assess(events []Event, locallyAuthorized bool) Report {
 		default:
 			valid = false
 		}
+	}
+	if events[0].Version == LifecycleJournalVersion && len(evidenceProblems(events)) != 0 {
+		valid = false
 	}
 	baseComplete, baseGood, _ := complete(r.Plan, r.Authorization.InvocationID, "baseline", phases["baseline"])
 	interventionComplete, interventionGood, _ := complete(r.Plan, r.Authorization.InvocationID, "intervention", phases["intervention"])
@@ -215,8 +226,18 @@ func assess(events []Event, locallyAuthorized bool) Report {
 	r.CandidateVerdict = result.Aggregate([]string{"baseline", "intervention", "application", "recovery", "coverage", "cleanup"}, r.Assertions, result.RunEvidence{PreconditionsMet: baseComplete && baseGood && valid && !aborted, InterventionRequired: true, InterventionObserved: r.InterventionConfirmed})
 	r.Verdict = r.CandidateVerdict
 	if !valid {
-		r.Verdict = result.Inconclusive
+		// In the new lifecycle format, other damaged/missing observations cannot
+		// erase an exact scoped signed zero-error violation. Legacy replay keeps
+		// its published interpretation. Neither case may manufacture PASS.
+		if events[0].Version != LifecycleJournalVersion {
+			r.Verdict = result.Inconclusive
+		} else if r.Verdict != result.Fail {
+			r.Verdict, r.CandidateVerdict = result.Inconclusive, result.Inconclusive
+		}
 		r.Unknowns = append(r.Unknowns, "invalid lifecycle or observation ordering")
+	}
+	if r.CancellationAccepted && r.Verdict == result.Pass {
+		r.Verdict, r.CandidateVerdict = result.Inconclusive, result.Inconclusive
 	}
 	if r.Verdict == result.Pass && (!locallyAuthorized || r.Execution != result.Succeeded) {
 		r.Verdict = result.Inconclusive

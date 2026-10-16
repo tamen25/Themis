@@ -55,7 +55,7 @@ func readPlan(path string) (kubefault.Plan, error) {
 
 func run(parent context.Context, args []string, out, diagnostics io.Writer) int {
 	if len(args) == 0 {
-		fmt.Fprintln(diagnostics, "usage: themis-kube init | plan | approve | run | status | reconcile | replay")
+		fmt.Fprintln(diagnostics, "usage: themis-kube init | plan | approve | run | cancel | status | reconcile | replay | verify")
 		return 4
 	}
 	command := args[0]
@@ -63,6 +63,7 @@ func run(parent context.Context, args []string, out, diagnostics io.Writer) int 
 	f.SetOutput(diagnostics)
 	state := f.String("state", ".themis/kind-t21", "explicit owned Kind private state")
 	var file, runName, scenario, approved, output, authorization, directory *string
+	var expectedDigest *string
 	switch command {
 	case "init":
 	case "plan":
@@ -76,10 +77,13 @@ func run(parent context.Context, args []string, out, diagnostics io.Writer) int 
 		file = f.String("f", "", "complete versioned plan")
 		authorization = f.String("authorization", "", "private authorization file")
 		directory = f.String("runs", "", "private output parent")
-	case "status", "reconcile":
+	case "status", "reconcile", "cancel":
 		directory = f.String("run-directory", "", "existing private run directory")
-	case "replay":
+	case "replay", "verify":
 		file = f.String("f", "", "public append-only event journal")
+		if command == "verify" {
+			expectedDigest = f.String("expect-plan-digest", "", "independently retained plan digest")
+		}
 	default:
 		fmt.Fprintln(diagnostics, "unsupported owned Kind command")
 		return 4
@@ -143,13 +147,53 @@ func run(parent context.Context, args []string, out, diagnostics io.Writer) int 
 		}
 		return reportExit(r)
 	}
-	if (command == "approve" && (*file == "" || *approved == "" || *output == "")) || (command == "run" && (*file == "" || *authorization == "")) || ((command == "status" || command == "reconcile") && *directory == "") {
+	if command == "verify" {
+		if *file == "" {
+			return 4
+		}
+		r, err := kubeexperiment.VerifyEvidence(*file, *expectedDigest)
+		if err != nil {
+			if code := emit(r); code != 0 {
+				return code
+			}
+			return fail(err)
+		}
+		if code := emit(r); code != 0 {
+			return code
+		}
+		if !r.BindingsValid {
+			return 6
+		}
+		if r.CredibleSignedFailure {
+			return 2
+		}
+		return 3
+	}
+	if (command == "approve" && (*file == "" || *approved == "" || *output == "")) || (command == "run" && (*file == "" || *authorization == "")) || ((command == "status" || command == "reconcile" || command == "cancel") && *directory == "") {
 		return 4
 	}
 	ctx, cancel := context.WithTimeout(parent, 20*time.Second)
 	defer cancel()
-	c, err := kubeexperiment.Open(ctx, *state)
+	var c *kubeexperiment.Cluster
+	var err error
+	if command == "status" || command == "reconcile" || command == "cancel" {
+		explicitState := ""
+		f.Visit(func(v *flag.Flag) {
+			if v.Name == "state" {
+				explicitState = *state
+			}
+		})
+		c, err = kubeexperiment.OpenRun(ctx, *directory, explicitState)
+	} else {
+		c, err = kubeexperiment.Open(ctx, *state)
+	}
 	if err != nil {
+		if command == "cancel" || command == "reconcile" {
+			if code := emit(map[string]any{"version": "themis.kubernetes-cleanup-receipt/v1alpha2", "operationalState": "CLEANUP_PENDING", "currentState": "UNKNOWN", "actionAccepted": false, "failure": "ProtectedInventoryOrAdmissionUnavailable"}); code != 0 {
+				return code
+			}
+			return 7
+		}
 		return fail(err)
 	}
 	switch command {
@@ -207,15 +251,23 @@ func run(parent context.Context, args []string, out, diagnostics io.Writer) int 
 			return fail(err)
 		}
 		return emit(r)
-	case "reconcile":
-		r, err := c.Reconcile(ctx, *directory)
-		if err != nil {
-			return fail(err)
+	case "reconcile", "cancel":
+		var r kubeexperiment.CleanupReceipt
+		if command == "cancel" {
+			r, err = c.Cancel(ctx, *directory)
+		} else {
+			r, err = c.Reconcile(ctx, *directory)
+		}
+		if err != nil && !errors.Is(err, kubeexperiment.ErrReceiptPublication) {
+			if code := emit(map[string]any{"version": "themis.kubernetes-cleanup-receipt/v1alpha2", "operationalState": "CLEANUP_PENDING", "currentState": "UNKNOWN", "actionAccepted": false, "failure": "ActionAcceptanceOrCoordinationUnavailable"}); code != 0 {
+				return code
+			}
+			return 7
 		}
 		if code := emit(r); code != 0 {
 			return code
 		}
-		if r.CurrentState != "INACTIVE" {
+		if err != nil || r.OperationalState != "CLEANUP_COMPLETE" {
 			return 7
 		}
 		return 0

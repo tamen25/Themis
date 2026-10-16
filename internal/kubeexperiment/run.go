@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"path/filepath"
+	"reflect"
 	"sync"
 	"time"
 
@@ -15,9 +16,10 @@ import (
 )
 
 type inventory struct {
-	Version       string                  `json:"version"`
-	Plan          kubefault.Plan          `json:"plan"`
-	Authorization kubefault.Authorization `json:"authorization"`
+	Version        string                  `json:"version"`
+	Plan           kubefault.Plan          `json:"plan"`
+	Authorization  kubefault.Authorization `json:"authorization"`
+	StateDirectory string                  `json:"stateDirectory,omitempty"`
 }
 
 func (c *Cluster) Approve(ctx context.Context, p kubefault.Plan, digest string) (kubefault.Authorization, error) {
@@ -75,6 +77,11 @@ func collect(ctx context.Context, c *kubefault.Client, j *journal, p kubefault.P
 	}
 	start := time.Now()
 	for i := 0; i < p.Contract.Samples; i++ {
+		if j.stop != nil {
+			if err := j.stop(); err != nil {
+				return err
+			}
+		}
 		timer := time.NewTimer(time.Until(start.Add(time.Duration(i) * slot)))
 		select {
 		case <-ctx.Done():
@@ -89,6 +96,11 @@ func collect(ctx context.Context, c *kubefault.Client, j *journal, p kubefault.P
 		if err := j.append(Event{Type: "OBSERVATION", Observation: &o}); err != nil {
 			return err
 		}
+		if j.stop != nil {
+			if err := j.stop(); err != nil {
+				return err
+			}
+		}
 	}
 	return nil
 }
@@ -98,7 +110,7 @@ func (c *Cluster) Execute(ctx context.Context, p kubefault.Plan, a kubefault.Aut
 }
 
 func (c *Cluster) executeWithStorage(ctx context.Context, p kubefault.Plan, a kubefault.Authorization, runsDirectory string, openJournal func(string) (journalFile, error)) (Report, string, error) {
-	if p.Validate() != nil || a.CheckKeys() != nil || a.Grant.PlanDigest != p.Digest() || !kubefault.VerifyGrant(a.Grant, c.Owner.ApproverKey, p.Target.Fixture, c.Owner.Operator, time.Now(), true) {
+	if p.Validate() != nil || a.CheckKeys() != nil || !reflect.DeepEqual(p, a.Grant.Plan) || a.Grant.PlanDigest != p.Digest() || !kubefault.VerifyGrant(a.Grant, c.Owner.ApproverKey, p.Target.Fixture, c.Owner.Operator, time.Now(), true) {
 		return Report{}, "", kubefault.ErrDenied
 	}
 	s, err := c.Connect(ctx, p)
@@ -118,7 +130,12 @@ func (c *Cluster) executeWithStorage(ctx context.Context, p kubefault.Plan, a ku
 	if err = lock.Acquire(ctx); err != nil {
 		return Report{}, dir, err
 	}
-	if err = writePrivate(filepath.Join(dir, "inventory.json"), inventory{"themis.kubernetes-execution-inventory/v1alpha1", p, a}); err != nil {
+	state, err := filepath.Abs(c.StateDirectory)
+	if err != nil {
+		return Report{}, dir, err
+	}
+	inv := inventory{Version: InventoryVersion, Plan: p, Authorization: a, StateDirectory: state}
+	if err = writePrivate(filepath.Join(dir, "inventory.json"), inv); err != nil {
 		return Report{}, dir, err
 	}
 	file, err := openJournal(filepath.Join(dir, "events.jsonl"))
@@ -126,7 +143,7 @@ func (c *Cluster) executeWithStorage(ctx context.Context, p kubefault.Plan, a ku
 		return Report{}, dir, err
 	}
 	defer file.Close()
-	j := &journal{file: file, epoch: time.Now()}
+	j := &journal{file: file, epoch: time.Now(), version: LifecycleJournalVersion, stop: func() error { return acceptedStop(dir, inv) }}
 	summary := publicAuthorization(a.Grant)
 	if err = j.append(Event{Type: "START", Plan: &p, Authorization: &summary}); err != nil {
 		return Report{}, dir, err
@@ -148,8 +165,105 @@ func (c *Cluster) executeWithStorage(ctx context.Context, p kubefault.Plan, a ku
 		}
 	}
 	if operationErr == nil {
-		operationErr = j.append(Event{Type: "INTENT"})
+		operationErr = c.apply(ctx, dir, inv, s, j)
 	}
+	if operationErr == nil {
+		operationErr = c.Revalidate(ctx, p)
+	}
+	if operationErr == nil {
+		operationErr = collect(ctx, s.Client, j, p, "intervention")
+	}
+	// Cleanup has its own context. Watchdog expiry does not depend on any I/O here.
+	cleanupCtx, cleanupCancel := context.WithTimeout(context.Background(), 2*time.Second)
+	status, cleanupErr := s.Client.Control(cleanupCtx, a, "remove")
+	if cleanupErr != nil {
+		// Parent cancellation may have closed the original forwarding stream.
+		// Reconnect only to the inventoried Pod/boot under the cleanup context.
+		if cleanupSession, connectErr := c.connectOriginal(cleanupCtx, p); connectErr == nil {
+			status, cleanupErr = cleanupSession.Client.Control(cleanupCtx, a, "remove")
+			cleanupSession.Close()
+		}
+	}
+	if cleanupErr == nil && status.Active {
+		cleanupErr = errors.New("fault still active after Remove")
+	}
+	if cleanupErr == nil {
+		cleanupErr = c.checkOriginal(cleanupCtx, p)
+	}
+	cleanupCancel()
+	if cleanupErr == nil {
+		cleanupErr = j.append(Event{Type: "REMOVED", Status: &status})
+	}
+	if cleanupErr == nil && operationErr == nil {
+		operationErr = collect(ctx, s.Client, j, p, "recovery")
+	}
+	// This short lock orders durable cancellation acceptance against finalization.
+	// A filesystem stall can delay acceptance, but cannot extend fixture expiry.
+	finalCtx, finalCancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer finalCancel()
+	gate, gateErr := lifecycleLock(finalCtx, dir)
+	if gateErr != nil {
+		return assess(j.events, true), dir, gateErr
+	}
+	defer gate.Close()
+	stopErr := acceptedStop(dir, inv)
+	if stopErr != nil {
+		operationErr = stopErr
+	}
+	execution := result.Succeeded
+	if operationErr != nil {
+		execution = result.Error
+		_ = j.append(Event{Type: "ABORT", Reason: "ExecutionInterrupted"})
+	}
+	if errors.Is(ctx.Err(), context.Canceled) || errors.Is(operationErr, errCancelled) {
+		execution = result.Cancelled
+	}
+	if errors.Is(ctx.Err(), context.DeadlineExceeded) {
+		execution = result.TimedOut
+	}
+	if errors.Is(operationErr, errCancelled) {
+		action, _ := stopRequested(dir, inv)
+		if action != nil {
+			_ = j.append(Event{Type: "CANCEL_ACCEPTED", ActionID: action.ID})
+		}
+	}
+	if cleanupErr != nil {
+		execution = result.CleanupPending
+	}
+	terminalErr := j.append(Event{Type: "FINAL", Execution: string(execution)})
+	report := assess(j.events, true)
+	if terminalErr != nil || j.poisoned || stopErr != nil && !errors.Is(stopErr, errCancelled) {
+		report.Execution = result.CleanupPending
+		report.Cleanup = "PENDING"
+		if report.Verdict == result.Pass {
+			report.Verdict = result.Inconclusive
+		}
+		report.Unknowns = append(report.Unknowns, "journal or lifecycle persistence failed; historical record is incomplete")
+	}
+	if err = writePrivate(filepath.Join(dir, "report.json"), report); err != nil {
+		report.Execution, report.Cleanup = result.CleanupPending, "PENDING"
+		if report.Verdict == result.Pass {
+			report.Verdict = result.Inconclusive
+		}
+		return report, dir, err
+	}
+	if terminalErr != nil {
+		return report, dir, terminalErr
+	}
+	return report, dir, nil
+}
+
+func (c *Cluster) apply(ctx context.Context, dir string, inv inventory, s *Session, j *journal) error {
+	gate, err := lifecycleLock(ctx, dir)
+	if err != nil {
+		return err
+	}
+	defer gate.Close()
+	if err = acceptedStop(dir, inv); err != nil {
+		return err
+	}
+	p, a := inv.Plan, inv.Authorization
+	operationErr := j.append(Event{Type: "INTENT"})
 	if operationErr == nil {
 		// Fresh API and exact boot-key checks occur after durable intent and directly
 		// before Apply. No journal append or retry occurs between these and Apply.
@@ -177,59 +291,7 @@ func (c *Cluster) executeWithStorage(ctx context.Context, p kubefault.Plan, a ku
 			_ = j.append(Event{Type: "ABORT", Attempted: attempted, Reason: "ApplyAcknowledgementUnavailable"})
 		}
 	}
-	if operationErr == nil {
-		operationErr = c.Revalidate(ctx, p)
-	}
-	if operationErr == nil {
-		operationErr = collect(ctx, s.Client, j, p, "intervention")
-	}
-	// Cleanup has its own context. Watchdog expiry does not depend on any I/O here.
-	cleanupCtx, cleanupCancel := context.WithTimeout(context.Background(), 2*time.Second)
-	status, cleanupErr := s.Client.Control(cleanupCtx, a, "remove")
-	if cleanupErr == nil && status.Active {
-		cleanupErr = errors.New("fault still active after Remove")
-	}
-	if cleanupErr == nil {
-		cleanupErr = c.Revalidate(cleanupCtx, p)
-	}
-	cleanupCancel()
-	if cleanupErr == nil {
-		cleanupErr = j.append(Event{Type: "REMOVED", Status: &status})
-	}
-	if cleanupErr == nil && operationErr == nil {
-		operationErr = collect(ctx, s.Client, j, p, "recovery")
-	}
-	execution := result.Succeeded
-	if operationErr != nil {
-		execution = result.Error
-		_ = j.append(Event{Type: "ABORT", Reason: "ExecutionInterrupted"})
-	}
-	if errors.Is(ctx.Err(), context.Canceled) {
-		execution = result.Cancelled
-	}
-	if errors.Is(ctx.Err(), context.DeadlineExceeded) {
-		execution = result.TimedOut
-	}
-	if cleanupErr != nil {
-		execution = result.CleanupPending
-	}
-	terminalErr := j.append(Event{Type: "FINAL", Execution: string(execution)})
-	report := assess(j.events, true)
-	if terminalErr != nil || j.poisoned {
-		report.Execution = result.CleanupPending
-		report.Cleanup = "PENDING"
-		if report.Verdict == result.Pass {
-			report.Verdict = result.Inconclusive
-		}
-		report.Unknowns = append(report.Unknowns, "journal persistence failed; historical record is incomplete")
-	}
-	if err = writePrivate(filepath.Join(dir, "report.json"), report); err != nil {
-		return report, dir, err
-	}
-	if terminalErr != nil {
-		return report, dir, terminalErr
-	}
-	return report, dir, nil
+	return operationErr
 }
 
 type CleanupReceipt struct {
@@ -242,51 +304,9 @@ type CleanupReceipt struct {
 	Recovery                   []Observation     `json:"recovery"`
 	RecoveryVerified           bool              `json:"recoveryVerified"`
 	HistoricalVerdictUnchanged bool              `json:"historicalVerdictUnchanged"`
-}
-
-func (c *Cluster) Reconcile(ctx context.Context, runDirectory string) (CleanupReceipt, error) {
-	var inv inventory
-	if err := localstate.Read(filepath.Join(runDirectory, "inventory.json"), &inv); err != nil {
-		return CleanupReceipt{}, err
-	}
-	if inv.Version != "themis.kubernetes-execution-inventory/v1alpha1" || inv.Plan.Validate() != nil || inv.Authorization.Grant.PlanDigest != inv.Plan.Digest() {
-		return CleanupReceipt{}, kubefault.ErrDenied
-	}
-	lock, err := localstate.OpenLock(filepath.Join(runDirectory, "runner.lock"), false)
-	if err != nil {
-		return CleanupReceipt{}, err
-	}
-	defer lock.Close()
-	held, err := lock.Try()
-	if err != nil || !held {
-		return CleanupReceipt{}, errors.New("runner is active; cleanup is not accepted")
-	}
-	r := CleanupReceipt{Version: "themis.kubernetes-cleanup-receipt/v1alpha1", PlanDigest: inv.Plan.Digest(), InvocationID: inv.Authorization.Grant.InvocationID, At: time.Now().UTC(), CurrentState: "UNKNOWN", HistoricalVerdictUnchanged: true}
-	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
-	defer cancel()
-	s, connectErr := c.Connect(ctx, inv.Plan)
-	if connectErr == nil {
-		defer s.Close()
-		status, removeErr := s.Client.Control(ctx, inv.Authorization, "remove")
-		if removeErr == nil && !status.Active {
-			r.Status = &status
-			r.CurrentState = "INACTIVE"
-			epoch := time.Now()
-			for i := 0; i < inv.Plan.Contract.Samples; i++ {
-				r.Recovery = append(r.Recovery, observe(ctx, s.Client, epoch, "recovery", i))
-			}
-			complete, good, _ := complete(inv.Plan, inv.Authorization.Grant.InvocationID, "recovery", r.Recovery)
-			r.RecoveryVerified = complete && good
-		} else {
-			r.CurrentState = "CLEANUP_PENDING"
-		}
-	} else {
-		r.CurrentState = "TARGET_UNAVAILABLE_OR_REPLACED"
-	}
-	// A corrupt journal never removes cleanup authority from the separate protected
-	// inventory. Receipt publication never repairs or rewrites that history.
-	if err = writePrivate(filepath.Join(runDirectory, "cleanup-"+kubefault.RandomID()+".json"), r); err != nil {
-		return r, err
-	}
-	return r, nil
+	Action                     *Action           `json:"action,omitempty"`
+	OperationalState           string            `json:"operationalState,omitempty"`
+	ReceiptPersisted           *bool             `json:"receiptPersisted,omitempty"`
+	Failure                    string            `json:"failure,omitempty"`
+	FixtureApplyFenceConfirmed bool              `json:"fixtureApplyFenceConfirmed,omitempty"`
 }

@@ -121,13 +121,10 @@ jobs:
       - name: Create owned synthetic experiment environment
         shell: pwsh
         run: ./scripts/kind-experiment.ps1 -Action up
-      - name: Real CLI experiments, process death, expiry and RBAC
+      - name: Real lifecycle, drift, cancellation, process death, expiry and RBAC
         shell: pwsh
         run: |
-          $env:THEMIS_KIND_EXPERIMENT_STATE = (Resolve-Path .themis/kind-t21).Path
-          $env:THEMIS_KUBE_RUNNER_BINARY = (Resolve-Path .cache/themis-kube).Path
-          go test -count=1 -v ./test/kubernetesexperiment
-          exit $LASTEXITCODE
+          ./scripts/kind-experiment.ps1 -Action test-lifecycle
       - name: Preserve T2.0 dry-run behavior
         shell: pwsh
         run: |

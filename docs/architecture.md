@@ -164,3 +164,20 @@ cleanup independently. Protected inventory and immutable reconciliation receipts
 preserve history across process death/corruption. No local OS authorization grant
 becomes cluster authority; private-file helpers only protect state. See
 [the execution guide](kubernetes-experiments.md) and ADRs T029–T035.
+
+## T2.2 Kubernetes lifecycle
+
+The same concrete runner adds `Cancel`, `Inspect`, `Reconcile`, and
+`VerifyEvidence`. Protected inventory and a short OS lifecycle gate order durable
+stop acceptance with Apply and finalization. Fixture-side fencing/expiry stays
+independent. Cleanup can reconnect to an unchanged original boot after generation
+drift, without resolving a replacement or permitting another execution.
+
+Inspection separates historical replay and unsigned saved claims from current
+signed state. Offline verification supplements hash checks with strict bindings,
+lifecycle, correlations and signature checks, then reuses the pure evaluator.
+Candidate PASS never becomes trusted execution PASS offline. New lifecycle
+artifacts are v1alpha2; legacy replay and T2.1 plans/grants stay compatible.
+No generic workflow engine or new Kubernetes execution resource exists. The
+[lifecycle guide](kubernetes-lifecycle.md) and ADRs T036–T042 describe the protocol,
+limits, live adversarial tests and deferred controller/runner integration.

@@ -43,3 +43,21 @@ capability in T2.0. Do not reuse local fixture grants or expand the dry-run Role
 ## T2.1 follow-up
 
 The [owned Kind runner](kubernetes-experiments.md) now implements these binding requirements for one fixed synthetic latency experiment, under the single trusted operator model in ADRs T029-T035. It has separate keys/RBAC and never treats this controller's preview as an execution grant. The production, administrator-trust and complete-attestation limitations remain.
+
+## T2.2 lifecycle follow-up
+
+Durable cancellation fences a cooperating runner; authenticated Remove fences the
+fixture. An unreachable control channel leaves that remote fence unconfirmed and
+returns cleanup pending. Original Pod/container/boot identity is mandatory for
+reconnection. Missing inventory is not reconstructed from unsigned events.
+Cancellation acceptance is serialized against Apply and finalization. Later
+cleanup cannot rewrite history; receipt publication failure remains operationally
+pending. Status separates fresh signed state from unsigned historical claims.
+
+The offline verifier checks response signatures against the embedded key and
+reports unauthenticated timing/phase/history explicitly. Even a completely
+re-signed and rehashed invented history cannot yield trusted execution PASS.
+Retained external digests detect key/plan substitution; T4 signing is deferred.
+Live test-only installer helpers may alter the UID-verified disposable fixture
+and owned API task. Runner/controller Roles gain no permissions. See
+[lifecycle boundaries](kubernetes-lifecycle.md) and ADRs T036–T042.

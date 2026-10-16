@@ -13,6 +13,7 @@ import (
 )
 
 const JournalVersion = "themis.kubernetes-experiment-journal/v1alpha1"
+const LifecycleJournalVersion = "themis.kubernetes-experiment-journal/v1alpha2"
 
 type Probe struct {
 	Kind        string          `json:"kind"`
@@ -48,6 +49,7 @@ type Event struct {
 	Attempted     *bool                 `json:"attempted,omitempty"`
 	Execution     string                `json:"execution,omitempty"`
 	Reason        string                `json:"reason,omitempty"`
+	ActionID      string                `json:"actionID,omitempty"`
 	Previous      string                `json:"previous"`
 	Hash          string                `json:"hash"`
 }
@@ -62,19 +64,24 @@ type journal struct {
 	epoch    time.Time
 	events   []Event
 	poisoned bool
+	version  string
+	stop     func() error
 }
 
 func (j *journal) append(e Event) error {
 	if j.poisoned {
 		return errors.New("journal writer is poisoned")
 	}
-	e.Version = JournalVersion
+	e.Version = j.version
+	if e.Version == "" {
+		e.Version = JournalVersion
+	}
 	e.Sequence = len(j.events)
 	e.AtNS = int64(time.Since(j.epoch))
 	if len(j.events) > 0 {
 		e.Previous = j.events[len(j.events)-1].Hash
 	}
-	e.Hash = kubefault.Digest(JournalVersion, e)
+	e.Hash = kubefault.Digest(e.Version, e)
 	data, err := json.Marshal(e)
 	if err == nil {
 		data = append(data, '\n')
@@ -103,6 +110,13 @@ func ReadJournal(path string) ([]Event, error) {
 		return nil, err
 	}
 	defer f.Close()
+	info, err := f.Stat()
+	if err != nil {
+		return nil, err
+	}
+	if !info.Mode().IsRegular() || info.Size() > 16<<20 {
+		return nil, errors.New("invalid or oversized journal file")
+	}
 	limited := io.LimitReader(f, (16<<20)+1)
 	scanner := bufio.NewScanner(limited)
 	scanner.Buffer(make([]byte, 4096), 65537)
@@ -120,7 +134,7 @@ func ReadJournal(path string) ([]Event, error) {
 		}
 		h := e.Hash
 		e.Hash = ""
-		if h != kubefault.Digest(JournalVersion, e) || e.Version != JournalVersion || e.Sequence != len(events) || e.AtNS < 0 {
+		if h != kubefault.Digest(e.Version, e) || (e.Version != JournalVersion && e.Version != LifecycleJournalVersion) || e.Sequence != len(events) || e.AtNS < 0 {
 			return nil, errors.New("experiment journal identity/sequence/hash mismatch")
 		}
 		e.Hash = h
@@ -130,12 +144,15 @@ func ReadJournal(path string) ([]Event, error) {
 			}
 		} else {
 			last := events[len(events)-1]
-			if e.Previous != last.Hash || e.AtNS < last.AtNS || last.Type == "FINAL" || e.Plan != nil || e.Authorization != nil {
+			if e.Version != last.Version || e.Previous != last.Hash || e.AtNS < last.AtNS || last.Type == "FINAL" || e.Plan != nil || e.Authorization != nil {
 				return nil, errors.New("invalid experiment event order")
 			}
 		}
 		if !validEventType(e.Type) {
 			return nil, errors.New("unsupported experiment event")
+		}
+		if (e.Type == "CANCEL_ACCEPTED" || e.ActionID != "") && e.Version != LifecycleJournalVersion {
+			return nil, errors.New("lifecycle event in legacy journal")
 		}
 		if e.Type == "OBSERVATION" {
 			if e.Observation == nil || e.Status != nil {
@@ -153,7 +170,7 @@ func ReadJournal(path string) ([]Event, error) {
 		return nil, errors.New("empty experiment journal")
 	}
 	// Scanner accepts a final non-newline record; an append journal does not.
-	info, err := f.Stat()
+	info, err = f.Stat()
 	if err != nil {
 		return nil, err
 	}
@@ -168,7 +185,7 @@ func ReadJournal(path string) ([]Event, error) {
 }
 func validEventType(t string) bool {
 	switch t {
-	case "START", "BASELINE", "INTENT", "APPLIED", "INTERVENTION", "REMOVED", "RECOVERY", "OBSERVATION", "ABORT", "FINAL":
+	case "START", "BASELINE", "INTENT", "APPLIED", "INTERVENTION", "REMOVED", "RECOVERY", "OBSERVATION", "ABORT", "CANCEL_ACCEPTED", "FINAL":
 		return true
 	}
 	return false

@@ -97,7 +97,13 @@ func measuredEvents(t *testing.T, scenario string) ([]Event, string) {
 		}
 		appendEvent(Event{Type: "FINAL", Execution: string(result.Succeeded)})
 	}
-	return j.events, path
+	// Read the persisted snapshots: the local status variable is reused for
+	// Remove, so its address is not an immutable in-memory Apply snapshot.
+	events, err := ReadJournal(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return events, path
 }
 
 func TestMeasuredLocalProtocolVerdictsAndUnsignedReplay(t *testing.T) {

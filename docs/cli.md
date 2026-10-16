@@ -1,5 +1,11 @@
 # CLI reference
 
+The separate owned Kind binary supports `cancel --run-directory`,
+`status --run-directory`, `reconcile --run-directory` and
+`verify -f events.jsonl [--expect-plan-digest DIGEST]`.
+See [Kubernetes lifecycle CLI and exit semantics](kubernetes-lifecycle.md).
+These commands do not add authority to the local CLI or dry-run controller.
+
 T0 commands and formats retain their existing meanings. `themis --help` lists
 them; [run semantics](runs.md) describe T0 journaling. T1.1 is an explicitly
 experimental namespace: `themis experiment --help`.

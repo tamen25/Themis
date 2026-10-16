@@ -35,3 +35,10 @@ requirements in a record do not imply an existing execution component.
 | [T033](T033-kubernetes-intervention-evidence.md) | Signed request holds, independent measurements and conservative verdicts |
 | [T034](T034-kubernetes-cleanup-and-crashes.md) | Cleanup inventory, crash recovery and immutable history |
 | [T035](T035-kubernetes-experiment-formats.md) | New experiment artifacts preserving the dry-run API |
+| [T036](T036-kubernetes-cancellation.md) | Protected cross-process cancellation and exact invocation fence |
+| [T037](T037-kubernetes-finalization-order.md) | Cancellation acceptance ordered with Apply and finalization |
+| [T038](T038-kubernetes-current-status.md) | Separate historical evidence and fresh current status |
+| [T039](T039-kubernetes-reconciliation-trust.md) | Inventory-based cleanup, immutable history and publication failure |
+| [T040](T040-kubernetes-evidence-provenance.md) | Strict offline verification without execution attestation |
+| [T041](T041-kubernetes-live-drift.md) | Owned live adversarial setup and target restoration |
+| [T042](T042-controller-runner-coordination.md) | Minimal future coordination protocol without new orchestration |

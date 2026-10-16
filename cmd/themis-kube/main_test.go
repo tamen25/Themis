@@ -81,3 +81,15 @@ func TestUnsupportedPlanAndClaimedPASSAreRejected(t *testing.T) {
 		t.Fatal("untrusted PASS claim accepted")
 	}
 }
+
+func TestLifecycleCommandsRequireCompleteArguments(t *testing.T) {
+	for _, command := range []string{"cancel", "verify"} {
+		var out, diagnostics bytes.Buffer
+		if code := run(context.Background(), []string{command}, &out, &diagnostics); code != 4 {
+			t.Fatalf("%s exit=%d want 4", command, code)
+		}
+		if code := run(context.Background(), []string{command, "--help"}, &out, &diagnostics); code != 0 {
+			t.Fatalf("%s help exit=%d", command, code)
+		}
+	}
+}

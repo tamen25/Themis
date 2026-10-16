@@ -60,3 +60,10 @@ client-simulation and skipped checks. Preserve the dry-run controller's RBAC and
 API. Public evidence must exclude operator credentials, private authorization
 keys, inventories and local-only guides. Independent review precedes expanding
 the single bounded synthetic fault scope.
+
+T2.2's [lifecycle test action](docs/kubernetes-lifecycle.md) includes actual Pod/
+container replacement and temporary API-task unavailability, guarded by installer
+ownership and live UIDs. Run it sequentially in the disposable Themis cluster.
+These tests never justify adding target-write permissions to the runner or
+controller. Preserve legacy replay bytes and distinguish offline candidate
+results, directly verified response signatures and trusted execution provenance.

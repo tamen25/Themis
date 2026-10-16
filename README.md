@@ -160,6 +160,24 @@ may not enforce modes; use the WSL Linux filesystem for fixture/run directories.
 Same-user processes and administrators are trusted. This is local experimental
 authorization, not enterprise authentication or production-ready fault injection.
 
+## Kubernetes lifecycle
+
+Owned Kind experiments now support cross-process cancellation, read-only status,
+idempotent reconciliation and trust-aware offline verification:
+
+```sh
+themis-kube cancel --run-directory /absolute/private/run-directory
+themis-kube status --run-directory /absolute/private/run-directory
+themis-kube reconcile --run-directory /absolute/private/run-directory
+themis-kube verify -f /path/to/events.jsonl --expect-plan-digest sha256:RETAINED_DIGEST
+```
+
+Cancellation accepted before finalization prevents PASS. Later cleanup preserves
+historical outcomes. Offline verification checks individual signatures and
+candidate assertions; an unsigned journal cannot produce trusted execution PASS.
+See [Kubernetes lifecycle, versions and test matrix](docs/kubernetes-lifecycle.md).
+The dry-run controller retains its original permissions and behavior.
+
 ## Exit codes
 
 | Code | Meaning |

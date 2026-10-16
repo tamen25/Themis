@@ -176,6 +176,12 @@ or imported journals as an authenticated remote release gate.
 
 ## Inspection, crashes and cleanup
 
+T2.2 extends these commands with cross-process `cancel`, protected setup-path
+resolution, stricter evidence verification and live drift tests. See the
+[lifecycle guide](kubernetes-lifecycle.md) for current synchronization, version
+compatibility, status fields and exact reproduction commands. The following
+T2.1 commands and safety boundary remain supported.
+
 ```powershell
 & $runner status --state $state --run-directory $runDirectory
 & $runner reconcile --state $state --run-directory $runDirectory

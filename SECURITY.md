@@ -144,3 +144,17 @@ resource state and historical outcome remain separate. This is not production
 authorization or complete execution attestation. Administrators and the local
 approval-key holder remain trusted. See [the experiment guide](docs/kubernetes-experiments.md)
 and ADRs T029–T035 for limits, private-state handling and the explicit test scope.
+
+T2.2 adds coordinated cross-process cancellation without broadening those
+permissions. Durable stop and fixture fencing are distinct: unavailable control
+leaves cleanup uncertainty explicit. Cleanup requires intact protected identities
+even with corrupt historical evidence. Status never authenticates old claims
+using a fresh response. Failed receipt publication is cleanup pending.
+
+The versioned offline verifier rechecks structure, signatures, correlations and
+assertions while keeping timing, phase placement, the embedded public-key trust
+root and complete execution unauthenticated. Candidate verdicts are not trusted
+remote execution verdicts. The fixture key does not sign the historical bundle.
+No production support or T4 evidence signing is implied. Adversarial Kind setup
+operations are opt-in installer tests only; the controller cannot execute them.
+See [Kubernetes lifecycle](docs/kubernetes-lifecycle.md).

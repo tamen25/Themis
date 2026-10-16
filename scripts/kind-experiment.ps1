@@ -1,5 +1,5 @@
 param(
-    [ValidateSet('up','down','restart-controller')][string]$Action='up',
+    [ValidateSet('up','down','restart-controller','test-lifecycle')][string]$Action='up',
     [string]$CommandProxy=''
 )
 $ErrorActionPreference='Stop'
@@ -17,7 +17,14 @@ function Tool([string]$Program,[string[]]$Arguments){
         if($CommandProxy){$output=& $CommandProxy proxy $Program @Arguments}else{$output=& $Program @Arguments}
         $code=$LASTEXITCODE
     }finally{$ErrorActionPreference=$preference}
-    if($code -ne 0){throw "$Program exited $code"}
+    if($code -ne 0){
+        # Go test output is public diagnostic evidence. Preserve it on failure;
+        # other setup commands may return credentials and stay unprinted.
+        if($Program -eq 'go' -and $Arguments[0] -eq 'test'){
+            foreach($line in $output){[Console]::Out.WriteLine($line)}
+        }
+        throw "$Program exited $code"
+    }
     return $output
 }
 function Kube([string[]]$Arguments){Tool 'kubectl' (@('--kubeconfig',$adminConfig,'--context','kind-themis-t21')+$Arguments)}
@@ -61,6 +68,18 @@ Push-Location -LiteralPath $repository
 try {
     if($Action -ne 'up'){
         $owner=Owned
+        if($Action -eq 'test-lifecycle'){
+            $env:THEMIS_KIND_LIFECYCLE='1'
+            $env:THEMIS_KIND_EXPERIMENT_STATE=$state
+            $env:THEMIS_KUBE_RUNNER_BINARY=$runner
+            $env:THEMIS_TEST_COMMAND_PROXY=$CommandProxy
+            Tool 'go' @('build','-trimpath','-o',$runner,'./cmd/themis-kube')
+            # Keep these sequential: the live adversarial tests deliberately alter
+            # only this owned fixture and temporarily pause this cluster's API task.
+            Tool 'go' @('test','-count=1','-v','./internal/kubeexperiment','-run','^TestRealKindJournalWriterTermination$')
+            Tool 'go' @('test','-count=1','-v','./test/kubernetesexperiment')
+            return
+        }
         if($Action -eq 'down'){
             Tool $kind @('delete','cluster','--name','themis-t21')
             Write-Output 'Deleted only the UID-verified owned themis-t21 cluster; private records retained.'
