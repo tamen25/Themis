@@ -67,3 +67,10 @@ ownership and live UIDs. Run it sequentially in the disposable Themis cluster.
 These tests never justify adding target-write permissions to the runner or
 controller. Preserve legacy replay bytes and distinguish offline candidate
 results, directly verified response signatures and trusted execution provenance.
+
+For T2.3, run `./scripts/kind-experiment.ps1 -Action test-coordination` on the owned
+environment as well as `test-lifecycle`. The [coordination guide](docs/kubernetes-coordination.md)
+documents public/private formats, one-use invocation, crash and uncertainty cases.
+Ordinary Go tests skip explicitly opted-in cluster demonstrations; record actual
+live executions separately. Fuzz the public index with
+`go test ./internal/kubeexperiment -run '^$' -fuzz '^FuzzCoordinationIndexNeverAuthenticatesExecution$' -fuzztime 10s`.

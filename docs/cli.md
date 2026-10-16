@@ -63,3 +63,9 @@ Run artifacts are `resources.json`, append-only `events.jsonl`, `report.json` an
 new `cleanup-<random-id>.json` receipts under the private run directory. Fixture
 state includes private credentials and authorization files: keep them local.
 `worker.log` contains worker diagnostics, never HTTP bodies or control tokens.
+
+T2.3 adds `themis-kube coordinate preview|prepare|approve|start|status|cancel|reconcile|verify`.
+The [operator coordination guide](kubernetes-coordination.md) describes exact JSON
+records, private state, explicit digest approval, single-use start, independent
+cancel/reconcile and offline trust semantics. Existing individual commands and
+their formats remain available. An administrative exit 0 is not a verdict.

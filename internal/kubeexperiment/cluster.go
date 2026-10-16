@@ -169,7 +169,8 @@ func (c *Cluster) resolve(ctx context.Context, runName string) (kubefault.Plan, 
 	}
 	preview, code := policy.Compile(run.GetUID(), run.GetGeneration(), spec, cluster, namespace, deployment)
 	status := kube.ReadStatus(run)
-	if code != "" || status.Invalidated || status.Phase != "PLANNED" || status.Verdict != result.NotRun || !status.PlanValid || status.PlanDigest != preview.Snapshot().Digest || status.ExecutionAllowed || status.ObservedGeneration != run.GetGeneration() || deployment.Spec.Replicas == nil || *deployment.Spec.Replicas != 1 {
+	snapshot := preview.Snapshot()
+	if code != "" || status.Invalidated || status.Phase != "PLANNED" || status.Verdict != result.NotRun || !status.PlanValid || status.PlanDigest != snapshot.Digest || status.Preview == nil || !reflect.DeepEqual(*status.Preview, snapshot) || status.ExecutionAllowed || status.ObservedGeneration != run.GetGeneration() || deployment.Spec.Replicas == nil || *deployment.Spec.Replicas != 1 {
 		return kubefault.Plan{}, kubefault.ErrDenied
 	}
 	pods := &corev1.PodList{}

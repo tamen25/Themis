@@ -60,12 +60,14 @@ type journalFile interface {
 	Close() error
 }
 type journal struct {
-	file     journalFile
-	epoch    time.Time
-	events   []Event
-	poisoned bool
-	version  string
-	stop     func() error
+	file                  journalFile
+	epoch                 time.Time
+	events                []Event
+	poisoned              bool
+	version               string
+	stop                  func() error
+	coordinationDirectory string
+	coordinationDigest    string
 }
 
 func (j *journal) append(e Event) error {

@@ -75,6 +75,20 @@ func (c *Cluster) action(ctx context.Context, dir, kind string, write func(strin
 		return CleanupReceipt{}, err
 	}
 	closed = true
+	r := c.cleanupOriginal(ctx, inv, a)
+	// Observed inactivity and durable publication are separate facts. Publication
+	// failure never returns operational success, even with a signed inactive reply.
+	persisted := true
+	r.ReceiptPersisted = &persisted
+	if err = write(filepath.Join(dir, "cleanup-"+a.ID+".json"), r); err != nil {
+		persisted = false
+		r.OperationalState, r.Failure = "CLEANUP_PENDING", "CleanupReceiptPublicationFailed"
+		return r, ErrReceiptPublication
+	}
+	return r, nil
+}
+
+func (c *Cluster) cleanupOriginal(ctx context.Context, inv inventory, a Action) CleanupReceipt {
 	r := CleanupReceipt{Version: "themis.kubernetes-cleanup-receipt/v1alpha2", PlanDigest: a.PlanDigest, InvocationID: a.InvocationID, At: time.Now().UTC(), CurrentState: "UNKNOWN", OperationalState: "CLEANUP_PENDING", HistoricalVerdictUnchanged: true, Action: &a}
 	s, connectErr := c.connectOriginal(ctx, inv.Plan)
 	if connectErr != nil {
@@ -95,14 +109,5 @@ func (c *Cluster) action(ctx context.Context, dir, kind string, write func(strin
 			r.Failure = "CleanupNotConfirmed"
 		}
 	}
-	// Observed inactivity and durable publication are separate facts. Publication
-	// failure never returns operational success, even with a signed inactive reply.
-	persisted := true
-	r.ReceiptPersisted = &persisted
-	if err = write(filepath.Join(dir, "cleanup-"+a.ID+".json"), r); err != nil {
-		persisted = false
-		r.OperationalState, r.Failure = "CLEANUP_PENDING", "CleanupReceiptPublicationFailed"
-		return r, ErrReceiptPublication
-	}
-	return r, nil
+	return r
 }

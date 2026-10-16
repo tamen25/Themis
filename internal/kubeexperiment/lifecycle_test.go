@@ -30,6 +30,9 @@ func executionFixture(t *testing.T) (*Cluster, kubefault.Plan, kubefault.Authori
 	public, key, _ := ed25519.GenerateKey(rand.Reader)
 	c.Owner.ApproverKey = hex.EncodeToString(public)
 	c.StateDirectory, _ = localstate.CreateDirectory(filepath.Join(t.TempDir(), "state"))
+	if err := writePrivate(filepath.Join(c.StateDirectory, "approver-key.json"), map[string]string{"privateKey": hex.EncodeToString(key)}); err != nil {
+		t.Fatal(err)
+	}
 	s, err := kubefault.NewServer(kubefault.Config{ClusterUID: c.Owner.ClusterUID, NamespaceUID: c.Owner.NamespaceUID, ApproverKey: c.Owner.ApproverKey, Operator: c.Owner.Operator}, p.Target.Fixture.PodName, p.Target.Fixture.PodUID)
 	if err != nil {
 		t.Fatal(err)

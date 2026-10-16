@@ -158,3 +158,13 @@ remote execution verdicts. The fixture key does not sign the historical bundle.
 No production support or T4 evidence signing is implied. Adversarial Kind setup
 operations are opt-in installer tests only; the controller cannot execute them.
 See [Kubernetes lifecycle](docs/kubernetes-lifecycle.md).
+
+T2.3's [operator coordination](docs/kubernetes-coordination.md) is an unsigned
+operational index. A resource event cannot approve or start a fault. Explicit
+approval independently recompiles the preview body/digest and exact execution
+identity; a durable once-only claim prevents ambiguous retries. A stop before
+inventory publication still fences coordinated Apply/finalization. Public records
+carry no private capabilities; copied or missing private inventory cannot authorize
+cleanup. Offline candidate PASS remains unauthenticated execution. Separate
+4096-entry status/mutation nonce budgets prevent polling from starving cleanup,
+while rejecting replay across both budgets and retaining independent expiry.

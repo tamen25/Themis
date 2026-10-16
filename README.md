@@ -250,6 +250,13 @@ Themis starts as a modular monolith:
 See [architecture](docs/architecture.md) and [decisions](docs/adr/README.md).
 No generic provider or storage framework is introduced.
 
+T2.3 adds an explicit [operator coordination workflow](docs/kubernetes-coordination.md):
+inspect the untrusted VerificationRun preview, independently reconstruct a plan,
+approve its exact digest, start once, and inspect/cancel/reconcile from another
+process. It reuses the existing restricted synthetic Kind engine and evidence
+verifier. Controller permissions and fault scope stay unchanged; public indexes
+cannot turn unsigned historical evidence into trusted execution PASS.
+
 T0 has a reviewed local implementation. Experimental T1.1 adds authorized local
 faults and independently observed intervention. Review its implementation and
 execution evidence before extending it. Later milestones may add

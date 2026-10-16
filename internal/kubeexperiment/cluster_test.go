@@ -57,7 +57,8 @@ func clusterFixture(t *testing.T) (*Cluster, kubefault.Plan) {
 	if code != "" {
 		t.Fatal(code)
 	}
-	status := api.RunStatus{ObservedGeneration: 1, Phase: "PLANNED", Verdict: result.NotRun, PlanValid: true, PlanDigest: preview.Snapshot().Digest}
+	snapshot := preview.Snapshot()
+	status := api.RunStatus{ObservedGeneration: 1, Phase: "PLANNED", Verdict: result.NotRun, PlanValid: true, PlanDigest: snapshot.Digest, Preview: &snapshot}
 	run.Object["status"], _ = runtime.DefaultUnstructuredConverter.ToUnstructured(&status)
 	scheme := runtime.NewScheme()
 	_ = corev1.AddToScheme(scheme)

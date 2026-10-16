@@ -54,8 +54,11 @@ func readPlan(path string) (kubefault.Plan, error) {
 }
 
 func run(parent context.Context, args []string, out, diagnostics io.Writer) int {
+	if len(args) > 0 && args[0] == "coordinate" {
+		return runCoordination(parent, args[1:], out, diagnostics)
+	}
 	if len(args) == 0 {
-		fmt.Fprintln(diagnostics, "usage: themis-kube init | plan | approve | run | cancel | status | reconcile | replay | verify")
+		fmt.Fprintln(diagnostics, "usage: themis-kube init | plan | approve | run | cancel | status | reconcile | replay | verify | coordinate")
 		return 4
 	}
 	command := args[0]

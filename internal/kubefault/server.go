@@ -30,16 +30,17 @@ type invocation struct {
 }
 
 type Server struct {
-	config      Config
-	Identity    Identity
-	key         ed25519.PrivateKey
-	mu          sync.Mutex
-	invocations map[string]*invocation
-	active      *invocation
-	nonces      map[string]bool
-	slots       chan struct{}
-	upstream    string
-	client      *http.Client
+	config       Config
+	Identity     Identity
+	key          ed25519.PrivateKey
+	mu           sync.Mutex
+	invocations  map[string]*invocation
+	active       *invocation
+	nonces       map[string]bool
+	statusNonces map[string]bool
+	slots        chan struct{}
+	upstream     string
+	client       *http.Client
 }
 
 func NewServer(config Config, podName, podUID string) (*Server, error) {
@@ -50,7 +51,7 @@ func NewServer(config Config, podName, podUID string) (*Server, error) {
 	if err != nil {
 		return nil, err
 	}
-	s := &Server{config: config, key: key, invocations: map[string]*invocation{}, nonces: map[string]bool{}, slots: make(chan struct{}, 16)}
+	s := &Server{config: config, key: key, invocations: map[string]*invocation{}, nonces: map[string]bool{}, statusNonces: map[string]bool{}, slots: make(chan struct{}, 16)}
 	s.Identity = Identity{Version: Version, ClusterUID: config.ClusterUID, NamespaceUID: config.NamespaceUID, PodName: podName, PodUID: podUID, InstanceID: RandomID(), ProxyID: RandomID(), EvidenceKey: hex.EncodeToString(public)}
 	t := &http.Transport{Proxy: nil, DialContext: (&net.Dialer{Timeout: 500 * time.Millisecond}).DialContext, DisableKeepAlives: true, DisableCompression: true, MaxConnsPerHost: 16, MaxResponseHeaderBytes: 8192}
 	s.client = &http.Client{Transport: t, Timeout: time.Second, CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }}
@@ -97,10 +98,17 @@ func (s *Server) control(c Command) (Status, string) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.currentLocked()
-	if len(s.nonces) >= 4096 || s.nonces[c.Nonce] {
+	// Read polling must not consume the mutation budget needed for cleanup.
+	// Both registries retain nonces without eviction; cross-action reuse is
+	// rejected, including when an authenticated caller changes and re-signs it.
+	registry := s.nonces
+	if c.Action == "status" {
+		registry = s.statusNonces
+	}
+	if len(registry) >= 4096 || s.nonces[c.Nonce] || s.statusNonces[c.Nonce] {
 		return Status{}, "CommandReplayDenied"
 	}
-	s.nonces[c.Nonce] = true
+	registry[c.Nonce] = true
 	g := s.invocations[c.Grant.InvocationID]
 	if g != nil && Digest(GrantVersion, g.grant) != Digest(GrantVersion, c.Grant) {
 		return Status{}, "InvocationMismatch"

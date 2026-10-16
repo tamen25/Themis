@@ -38,5 +38,6 @@ fuzz:
 	$(GO) test ./internal/experiment -run '^$$' -fuzz '^FuzzReplayExperiment$$' -fuzztime 10s
 	$(GO) test ./internal/kube -run '^$$' -fuzz '^FuzzDryRunSpec$$' -fuzztime 10s
 	$(GO) test ./internal/kubeexperiment -run '^$$' -fuzz '^FuzzKubernetesJournalNeverTrustsPASS$$' -fuzztime 10s
+	$(GO) test ./internal/kubeexperiment -run '^$$' -fuzz '^FuzzCoordinationIndexNeverAuthenticatesExecution$$' -fuzztime 10s
 
 check: fmt-check vet test build controller kube-runner

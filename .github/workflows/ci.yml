@@ -69,6 +69,9 @@ jobs:
       - name: Fuzz Kubernetes journal trust boundary
         if: runner.os == 'Linux'
         run: go test ./internal/kubeexperiment -run '^$' -fuzz '^FuzzKubernetesJournalNeverTrustsPASS$' -fuzztime 10s
+      - name: Fuzz coordination index trust boundary
+        if: runner.os == 'Linux'
+        run: go test ./internal/kubeexperiment -run '^$' -fuzz '^FuzzCoordinationIndexNeverAuthenticatesExecution$' -fuzztime 10s
 
   kind-dry-run:
     runs-on: ubuntu-latest
@@ -125,6 +128,9 @@ jobs:
         shell: pwsh
         run: |
           ./scripts/kind-experiment.ps1 -Action test-lifecycle
+      - name: Real operator coordination, duplicate starts, drift, crashes and polling
+        shell: pwsh
+        run: ./scripts/kind-experiment.ps1 -Action test-coordination
       - name: Preserve T2.0 dry-run behavior
         shell: pwsh
         run: |

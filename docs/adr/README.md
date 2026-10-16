@@ -42,3 +42,10 @@ requirements in a record do not imply an existing execution component.
 | [T040](T040-kubernetes-evidence-provenance.md) | Strict offline verification without execution attestation |
 | [T041](T041-kubernetes-live-drift.md) | Owned live adversarial setup and target restoration |
 | [T042](T042-controller-runner-coordination.md) | Minimal future coordination protocol without new orchestration |
+| [T043](T043-operator-coordination.md) | Explicit operator boundary and independent preview reconstruction |
+| [T044](T044-immutable-coordination-invocations.md) | Immutable invocation and consumed duplicate/crash claims |
+| [T045](T045-coordination-approval-expiry.md) | Independent approval, half-publication and unchanged expiry |
+| [T046](T046-coordination-crash-cancel.md) | Ordered cancellation before inventory and conservative recovery |
+| [T047](T047-coordination-index-provenance.md) | Versioned operational index without historical attestation |
+| [T048](T048-status-polling-replay-budgets.md) | Bounded separate polling/mutation replay protection |
+| [T049](T049-future-native-coordination.md) | Deferred native execution ownership and unchanged controller RBAC |

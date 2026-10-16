@@ -1,5 +1,5 @@
 param(
-    [ValidateSet('up','down','restart-controller','test-lifecycle')][string]$Action='up',
+    [ValidateSet('up','down','restart-controller','test-lifecycle','test-coordination')][string]$Action='up',
     [string]$CommandProxy=''
 )
 $ErrorActionPreference='Stop'
@@ -68,6 +68,16 @@ Push-Location -LiteralPath $repository
 try {
     if($Action -ne 'up'){
         $owner=Owned
+        if($Action -eq 'test-coordination'){
+            $env:THEMIS_KIND_LIFECYCLE='1'
+            $env:THEMIS_KIND_COORDINATION='1'
+            $env:THEMIS_KIND_EXPERIMENT_STATE=$state
+            $env:THEMIS_KUBE_RUNNER_BINARY=$runner
+            $env:THEMIS_TEST_COMMAND_PROXY=$CommandProxy
+            Tool 'go' @('build','-trimpath','-o',$runner,'./cmd/themis-kube')
+            Tool 'go' @('test','-count=1','-v','./test/kubernetesexperiment','-run','TestOwnedKindCoordinat|TestOwnedKindStatusPollingCannotStarveCleanup')
+            return
+        }
         if($Action -eq 'test-lifecycle'){
             $env:THEMIS_KIND_LIFECYCLE='1'
             $env:THEMIS_KIND_EXPERIMENT_STATE=$state

@@ -181,3 +181,16 @@ artifacts are v1alpha2; legacy replay and T2.1 plans/grants stay compatible.
 No generic workflow engine or new Kubernetes execution resource exists. The
 [lifecycle guide](kubernetes-lifecycle.md) and ADRs T036–T042 describe the protocol,
 limits, live adversarial tests and deferred controller/runner integration.
+
+## T2.3 operator coordination
+
+`internal/kubeexperiment/coordination*.go` connects independently reconstructed
+request/preview/plan to explicit approval and the existing engine. New versioned
+operational records reference unchanged execution journals and reports; no second
+verdict source exists. A durable one-use claim prevents restart/retry application.
+An outer operator gate orders stop acceptance even before run inventory exists;
+the existing inner gate retains compatibility with individual cancellation.
+Missing protected execution inventory never authorizes guessed cleanup. Controller,
+API, RBAC and fault scope remain unchanged. Read and mutation replay budgets in
+the fixture are independently bounded. See [workflow](kubernetes-coordination.md)
+and ADRs T043-T049 for provenance, crash behavior and future native ownership.

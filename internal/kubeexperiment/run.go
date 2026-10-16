@@ -110,6 +110,10 @@ func (c *Cluster) Execute(ctx context.Context, p kubefault.Plan, a kubefault.Aut
 }
 
 func (c *Cluster) executeWithStorage(ctx context.Context, p kubefault.Plan, a kubefault.Authorization, runsDirectory string, openJournal func(string) (journalFile, error)) (Report, string, error) {
+	return c.executeCoordinated(ctx, p, a, runsDirectory, openJournal, "", "")
+}
+
+func (c *Cluster) executeCoordinated(ctx context.Context, p kubefault.Plan, a kubefault.Authorization, runsDirectory string, openJournal func(string) (journalFile, error), coordinationDirectory, coordinationDigest string) (Report, string, error) {
 	if p.Validate() != nil || a.CheckKeys() != nil || !reflect.DeepEqual(p, a.Grant.Plan) || a.Grant.PlanDigest != p.Digest() || !kubefault.VerifyGrant(a.Grant, c.Owner.ApproverKey, p.Target.Fixture, c.Owner.Operator, time.Now(), true) {
 		return Report{}, "", kubefault.ErrDenied
 	}
@@ -143,7 +147,7 @@ func (c *Cluster) executeWithStorage(ctx context.Context, p kubefault.Plan, a ku
 		return Report{}, dir, err
 	}
 	defer file.Close()
-	j := &journal{file: file, epoch: time.Now(), version: LifecycleJournalVersion, stop: func() error { return acceptedStop(dir, inv) }}
+	j := &journal{file: file, epoch: time.Now(), version: LifecycleJournalVersion, coordinationDirectory: coordinationDirectory, coordinationDigest: coordinationDigest, stop: func() error { return executionStop(dir, inv, coordinationDirectory, coordinationDigest) }}
 	summary := publicAuthorization(a.Grant)
 	if err = j.append(Event{Type: "START", Plan: &p, Authorization: &summary}); err != nil {
 		return Report{}, dir, err
@@ -201,12 +205,12 @@ func (c *Cluster) executeWithStorage(ctx context.Context, p kubefault.Plan, a ku
 	// A filesystem stall can delay acceptance, but cannot extend fixture expiry.
 	finalCtx, finalCancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer finalCancel()
-	gate, gateErr := lifecycleLock(finalCtx, dir)
+	gate, gateErr := executionLock(finalCtx, dir, coordinationDirectory)
 	if gateErr != nil {
 		return assess(j.events, true), dir, gateErr
 	}
 	defer gate.Close()
-	stopErr := acceptedStop(dir, inv)
+	stopErr := j.stop()
 	if stopErr != nil {
 		operationErr = stopErr
 	}
@@ -225,6 +229,10 @@ func (c *Cluster) executeWithStorage(ctx context.Context, p kubefault.Plan, a ku
 		action, _ := stopRequested(dir, inv)
 		if action != nil {
 			_ = j.append(Event{Type: "CANCEL_ACCEPTED", ActionID: action.ID})
+		} else if coordinationDirectory != "" {
+			if action, _ := coordinationStop(coordinationDirectory, p.Digest(), a.Grant.InvocationID, coordinationDigest); action != nil {
+				_ = j.append(Event{Type: "CANCEL_ACCEPTED", ActionID: action.ID})
+			}
 		}
 	}
 	if cleanupErr != nil {
@@ -254,12 +262,12 @@ func (c *Cluster) executeWithStorage(ctx context.Context, p kubefault.Plan, a ku
 }
 
 func (c *Cluster) apply(ctx context.Context, dir string, inv inventory, s *Session, j *journal) error {
-	gate, err := lifecycleLock(ctx, dir)
+	gate, err := executionLock(ctx, dir, j.coordinationDirectory)
 	if err != nil {
 		return err
 	}
 	defer gate.Close()
-	if err = acceptedStop(dir, inv); err != nil {
+	if err = j.stop(); err != nil {
 		return err
 	}
 	p, a := inv.Plan, inv.Authorization
