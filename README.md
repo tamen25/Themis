@@ -1,5 +1,11 @@
 # Themis
 
+Experimental T3.0 adds a separate `themis-postgres` CLI for owned disposable
+local PostgreSQL logical backup/restore experiments with independent COMMIT
+receipts, measured readiness, conservative verdicts and exact-resource cleanup.
+See the [PostgreSQL recovery guide](docs/postgres-recovery.md). Chaos Mesh
+remains planning-only with its existing execution blockers.
+
 Themis is an early Go reliability verification project. Its T0 CLI validates
 contracts, creates immutable plans, runs bounded local HTTP checks, and exports
 unsigned reports that can be replayed offline. Experimental T1.1 adds one owned

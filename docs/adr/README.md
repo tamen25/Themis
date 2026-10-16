@@ -54,3 +54,11 @@ requirements in a record do not imply an existing execution component.
 | [T052](T052-chaosmesh-installation-separation.md) | New owned schema-only cluster and read-only runtime permissions |
 | [T053](T053-external-evidence-and-expiry.md) | Effect, recovery and independent expiry remain hard prerequisites |
 | [T054](T054-defer-provider-framework.md) | Concrete blocked provider boundary without rewriting working engines |
+| [T055](T055-postgres-safety.md) | Separate local database safety and original identities |
+| [T056](T056-logical-recovery-boundary.md) | Pinned, bounded logical backup and restore |
+| [T057](T057-commit-receipts.md) | Independent acknowledged-COMMIT host ledger |
+| [T058](T058-restore-readiness.md) | Observed shutdown to verified application readiness |
+| [T059](T059-observed-data-loss.md) | Exact receipt comparison, recovery point and uncertainty |
+| [T060](T060-database-provenance.md) | Individual observations without whole-run attestation |
+| [T061](T061-postgres-cleanup.md) | Protected ownership, poisoned journal and crash recovery |
+| [T062](T062-future-database-boundaries.md) | Deferred physical backup, PITR and failover |

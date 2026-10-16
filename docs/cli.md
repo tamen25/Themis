@@ -74,3 +74,8 @@ The separate `themis-chaosmesh plan|admit|provider` CLI is documented in the
 [external-provider planning guide](chaosmesh.md). Plan/provider are read-only
 administrative output; admit always returns DENIED/NOT_RUN, exit 5. It has no
 fault execution or approval command and cannot consume synthetic grants.
+## PostgreSQL recovery CLI
+
+`themis-postgres setup|plan|approve|run|reconcile|replay` is separate from the
+HTTP and Kubernetes CLIs. It operates only on a newly owned local Docker source
+and distinct fresh restore server. See [commands, exits and trust boundaries](postgres-recovery.md).

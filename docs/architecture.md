@@ -205,3 +205,12 @@ approved-UID enforcement and no demonstrated independent hard expiry, so the
 explicit planning-only fallback is implemented. No second executor, grant issuer,
 provider registry, generic mutation interface or evaluator is created. See
 [the safety audit](chaosmesh.md) and ADRs T050-T054.
+## PostgreSQL recovery boundary
+
+`cmd/themis-postgres` and `internal/postgres` add one concrete local logical
+backup/restore workflow. Contracts, frozen plans, database-specific grants,
+Docker ownership checks, host COMMIT receipts, private archives and measured
+restored application checks remain inside this package. It reuses only
+`localstate` protection/locking and pure `result` aggregation. It imports no
+Kubernetes engine and changes no existing provider interface or RBAC.
+See [the recovery architecture and limitations](postgres-recovery.md).

@@ -1,0 +1,89 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://themis.invalid/schemas/postgres-recovery-v1alpha1.json",
+  "title": "Owned synthetic PostgreSQL logical recovery",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "version",
+    "name",
+    "target",
+    "workflow",
+    "backupMethod",
+    "restoreMethod",
+    "scenario",
+    "maxRestoreMillis",
+    "maxLostCommits",
+    "minReceipts",
+    "requiredTables",
+    "integrity",
+    "cleanupRequired",
+    "maxRuntimeSeconds",
+    "maxBackupBytes",
+    "maxVolumeBytes"
+  ],
+  "properties": {
+    "version": {
+      "const": "themis.postgres/v1alpha1"
+    },
+    "name": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]{0,47}$"
+    },
+    "target": {
+      "const": "owned-docker-postgres"
+    },
+    "workflow": {
+      "const": "pg-logical-v1"
+    },
+    "backupMethod": {
+      "const": "pg_dump-custom"
+    },
+    "restoreMethod": {
+      "const": "pg_restore-single-transaction"
+    },
+    "scenario": {
+      "enum": [
+        "healthy",
+        "ack-loss",
+        "missing-receipt",
+        "cleanup-denied"
+      ]
+    },
+    "maxRestoreMillis": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 60000
+    },
+    "maxLostCommits": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 32
+    },
+    "minReceipts": {
+      "const": 16
+    },
+    "requiredTables": {
+      "const": [
+        "accounts",
+        "health",
+        "transactions"
+      ]
+    },
+    "integrity": {
+      "const": "exact-receipts-and-constraints"
+    },
+    "cleanupRequired": {
+      "const": true
+    },
+    "maxRuntimeSeconds": {
+      "const": 120
+    },
+    "maxBackupBytes": {
+      "const": 8388608
+    },
+    "maxVolumeBytes": {
+      "const": 134217728
+    }
+  }
+}

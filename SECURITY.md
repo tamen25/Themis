@@ -177,3 +177,12 @@ fault resource is installed. Its read-only planner cannot write provider resourc
 mutate workloads, read Secrets, exec or forward. The ordinary controller and
 synthetic runner RBAC remain unchanged. SHA-256/OCI pins are not signature trust
 or provider runtime compatibility proof. No new local/Kubernetes grant is minted.
+# Disposable PostgreSQL recovery
+
+The PostgreSQL adapter admits only an explicit local Docker socket and original
+engine, newly owned exact container IDs and constrained synthetic databases.
+It does not accept SQL, DSNs or existing database targets. Docker admins and the
+local OS actor remain trusted; this is not daemon-enforced tenant isolation.
+See the [database-specific authorization, cleanup and evidence boundary](docs/postgres-recovery.md).
+Chaos Mesh execution remains disabled; the PostgreSQL workstream does not solve
+its actuator identity or independent expiry blockers.

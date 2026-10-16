@@ -89,3 +89,10 @@ owned schema/planning environment. Read [the audit](docs/chaosmesh.md) before
 changing its hard gates. Real external fault tests are disabled; schema dry-run,
 controlled clients and synthetic-provider successes cannot substitute for a real
 Chaos Mesh intervention. Preserve this distinction in evidence and handoffs.
+## PostgreSQL development
+
+Run ordinary Go checks without Docker. Real PostgreSQL tests require explicit
+local engine identity, private state and the pinned image; follow
+[the opt-in instructions](docs/postgres-recovery.md#developer-validation).
+Never include raw backup files, private inventories, grants, keys, database
+volumes or credential files in review artifacts. Preserve legitimate testdata.

@@ -1,6 +1,9 @@
 # Chaos Mesh planning and safety gates (T2.4)
 
-**External fault execution is disabled. T2.4 is NOT READY FOR T3.0.**
+**External fault execution is disabled. T2.4's external execution gates remain closed.**
+
+The separately authorized [T3.0 PostgreSQL workstream](postgres-recovery.md)
+does not change the provider findings or enable Chaos Mesh execution.
 
 This implements the milestone's explicit planning/admission fallback. The audited
 NetworkChaos API does not enforce Themis's approved Pod UID through selection,

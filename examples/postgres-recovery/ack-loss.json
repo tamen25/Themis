@@ -1,0 +1,22 @@
+{
+    "version":  "themis.postgres/v1alpha1",
+    "name":  "synthetic-recovery",
+    "target":  "owned-docker-postgres",
+    "workflow":  "pg-logical-v1",
+    "backupMethod":  "pg_dump-custom",
+    "restoreMethod":  "pg_restore-single-transaction",
+    "scenario":  "ack-loss",
+    "maxRestoreMillis":  60000,
+    "maxLostCommits":  0,
+    "minReceipts":  16,
+    "requiredTables":  [
+                           "accounts",
+                           "health",
+                           "transactions"
+                       ],
+    "integrity":  "exact-receipts-and-constraints",
+    "cleanupRequired":  true,
+    "maxRuntimeSeconds":  120,
+    "maxBackupBytes":  8388608,
+    "maxVolumeBytes":  134217728
+}
