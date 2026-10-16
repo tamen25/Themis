@@ -45,8 +45,17 @@ execution on the foundation. A green test suite alone does not satisfy this
 architecture review checkpoint.
 
 The implementation guide is local planning material and must never be committed
-or deleted. Keep its actual path in `.git/info/exclude` in each checkout; verify
-with `git check-ignore -v -- <path>`. Do not broadly ignore Markdown or docs.
+or deleted. The root `THEMIS_IMPLEMENTATION_GUIDE.md` is excluded by `.gitignore`.
+If it lives elsewhere, add its actual path to `.git/info/exclude` in that
+checkout. Verify with `git check-ignore -v -- <path>`. Do not broadly ignore
+Markdown, docs or legitimate `testdata` fixtures.
+
+Before committing, review `git diff --cached --name-only` and
+`git diff --cached --check` for unintended content. Before pushing, scan the
+staged snapshot and reachable Git history for credentials and private state;
+ignore rules do not remove already tracked content or historical blobs.
+Keep review artifacts, execution evidence, environment files, kubeconfigs and
+tokens out of commits. A secret-free `.env.example` may be tracked.
 
 Use focused commits and PR descriptions explaining the behavior change,
 validation and limitations. Do not include credentials, private contract data or
