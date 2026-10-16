@@ -194,3 +194,14 @@ Missing protected execution inventory never authorizes guessed cleanup. Controll
 API, RBAC and fault scope remain unchanged. Read and mutation replay budgets in
 the fixture are independently bounded. See [workflow](kubernetes-coordination.md)
 and ADRs T043-T049 for provenance, crash behavior and future native ownership.
+
+## T2.4 external-provider planning boundary
+
+`internal/chaosmesh` and `cmd/themis-chaosmesh` add a concrete read-only planner
+and versioned denied admission for one researched NetworkChaos delay. They reuse
+the actual Kubernetes preview compiler and bounded JSON utilities. Both working
+synthetic engines and the controller remain unchanged. Source audit found missing
+approved-UID enforcement and no demonstrated independent hard expiry, so the
+explicit planning-only fallback is implemented. No second executor, grant issuer,
+provider registry, generic mutation interface or evaluator is created. See
+[the safety audit](chaosmesh.md) and ADRs T050-T054.

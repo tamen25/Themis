@@ -257,6 +257,11 @@ process. It reuses the existing restricted synthetic Kind engine and evidence
 verifier. Controller permissions and fault scope stay unchanged; public indexes
 cannot turn unsigned historical evidence into trusted execution PASS.
 
+T2.4 adds [Chaos Mesh research and non-executable planning](docs/chaosmesh.md).
+The audited provider cannot yet satisfy the approved-UID and independent-expiry
+gates. External admission stays DENIED; only CRD-schema/read-only negative tests
+are enabled. A second working fault provider and readiness for T3.0 are unproven.
+
 T0 has a reviewed local implementation. Experimental T1.1 adds authorized local
 faults and independently observed intervention. Review its implementation and
 execution evidence before extending it. Later milestones may add

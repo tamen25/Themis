@@ -49,3 +49,8 @@ requirements in a record do not imply an existing execution component.
 | [T047](T047-coordination-index-provenance.md) | Versioned operational index without historical attestation |
 | [T048](T048-status-polling-replay-budgets.md) | Bounded separate polling/mutation replay protection |
 | [T049](T049-future-native-coordination.md) | Deferred native execution ownership and unchanged controller RBAC |
+| [T050](T050-chaosmesh-hard-gates.md) | Research findings block external activation; planning/admission fallback |
+| [T051](T051-external-provider-artifact.md) | Separate versioned external intent without synthetic authority reuse |
+| [T052](T052-chaosmesh-installation-separation.md) | New owned schema-only cluster and read-only runtime permissions |
+| [T053](T053-external-evidence-and-expiry.md) | Effect, recovery and independent expiry remain hard prerequisites |
+| [T054](T054-defer-provider-framework.md) | Concrete blocked provider boundary without rewriting working engines |

@@ -69,3 +69,8 @@ The [operator coordination guide](kubernetes-coordination.md) describes exact JS
 records, private state, explicit digest approval, single-use start, independent
 cancel/reconcile and offline trust semantics. Existing individual commands and
 their formats remain available. An administrative exit 0 is not a verdict.
+
+The separate `themis-chaosmesh plan|admit|provider` CLI is documented in the
+[external-provider planning guide](chaosmesh.md). Plan/provider are read-only
+administrative output; admit always returns DENIED/NOT_RUN, exit 5. It has no
+fault execution or approval command and cannot consume synthetic grants.

@@ -4,7 +4,7 @@ ifeq ($(OS),Windows_NT)
 GOBIN := bin/themis.exe
 endif
 
-.PHONY: build controller kube-runner fmt fmt-check vet test race fuzz check
+.PHONY: build controller kube-runner chaosmesh-planner fmt fmt-check vet test race fuzz check
 
 build:
 	$(GO) build -trimpath -o $(GOBIN) ./cmd/themis
@@ -14,6 +14,9 @@ controller:
 
 kube-runner:
 	$(GO) build -trimpath -o bin/ ./cmd/themis-kube ./cmd/themis-kube-fixture
+
+chaosmesh-planner:
+	$(GO) build -trimpath -o bin/ ./cmd/themis-chaosmesh
 
 fmt:
 	$(GO) fmt ./...
@@ -39,5 +42,6 @@ fuzz:
 	$(GO) test ./internal/kube -run '^$$' -fuzz '^FuzzDryRunSpec$$' -fuzztime 10s
 	$(GO) test ./internal/kubeexperiment -run '^$$' -fuzz '^FuzzKubernetesJournalNeverTrustsPASS$$' -fuzztime 10s
 	$(GO) test ./internal/kubeexperiment -run '^$$' -fuzz '^FuzzCoordinationIndexNeverAuthenticatesExecution$$' -fuzztime 10s
+	$(GO) test ./internal/chaosmesh -run '^$$' -fuzz '^FuzzExternalPlanCannotAuthorizeFault$$' -fuzztime 10s
 
 check: fmt-check vet test build controller kube-runner

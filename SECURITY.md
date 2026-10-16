@@ -168,3 +168,12 @@ carry no private capabilities; copied or missing private inventory cannot author
 cleanup. Offline candidate PASS remains unauthenticated execution. Separate
 4096-entry status/mutation nonce budgets prevent polling from starving cleanup,
 while rejecting replay across both budgets and retaining independent expiry.
+
+T2.4's [Chaos Mesh audit](docs/chaosmesh.md) leaves external execution disabled.
+Named Pod selection and controller-managed duration do not establish the required
+approved-UID and independent hard-expiry guarantees. The dedicated new cluster
+installs only the pinned CRD schema; no privileged Chaos Mesh manager/daemon or
+fault resource is installed. Its read-only planner cannot write provider resources,
+mutate workloads, read Secrets, exec or forward. The ordinary controller and
+synthetic runner RBAC remain unchanged. SHA-256/OCI pins are not signature trust
+or provider runtime compatibility proof. No new local/Kubernetes grant is minted.

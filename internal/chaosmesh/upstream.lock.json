@@ -1,0 +1,135 @@
+{
+    "version":  "themis.chaosmesh-upstream-lock/v1alpha1",
+    "auditedArtifacts":  {
+                             "name":  "chaos-mesh",
+                             "release":  "v2.8.5",
+                             "sourceCommit":  "e020a2df5a69e99e49d2a3dda9e6be22237fd0d8",
+                             "sourceArchiveSHA256":  "36be4a4dc1baecd8a4f1210fc6c930b006fee87165e7b00795122f85b7885f72",
+                             "chartSHA256":  "342aa09792d77c874d7ce7ca4083005bf7342c5aace12ea818010e20eac8cb54",
+                             "networkChaosCRDSHA256":  "d151d3d38cfb4e906df457a2927a8bad8872241655b0267e08e3315b1b615974",
+                             "controllerImage":  "ghcr.io/chaos-mesh/chaos-mesh@sha256:942bff26d591537f655df50532e3880d73fa8b6fca34a233fc69f8ccfd36188d",
+                             "daemonImage":  "ghcr.io/chaos-mesh/chaos-daemon@sha256:d794bf427ab1dfacfd51c2f417d26731ce46919637b1c83620f0afd40f580bd4"
+                         },
+    "releaseURL":  "https://github.com/chaos-mesh/chaos-mesh/releases/tag/v2.8.5",
+    "releasePublishedAt":  "2026-10-16T03:22:15Z",
+    "sourceURL":  "https://codeload.github.com/chaos-mesh/chaos-mesh/zip/e020a2df5a69e99e49d2a3dda9e6be22237fd0d8",
+    "chartURL":  "https://charts.chaos-mesh.org/chaos-mesh-2.8.5.tgz",
+    "crdURL":  "https://raw.githubusercontent.com/chaos-mesh/chaos-mesh/e020a2df5a69e99e49d2a3dda9e6be22237fd0d8/config/crd/bases/chaos-mesh.org_networkchaos.yaml",
+    "platformDigests":  {
+                            "daemon":  [
+                                           {
+                                               "mediaType":  "application/vnd.docker.distribution.manifest.v2+json",
+                                               "digest":  "sha256:7ee32b5127444acbf882a233c7db31b473edf350b6fbebaaff031a94fbc80486",
+                                               "size":  2214,
+                                               "platform":  {
+                                                                "architecture":  "amd64",
+                                                                "os":  "linux"
+                                                            }
+                                           },
+                                           {
+                                               "mediaType":  "application/vnd.docker.distribution.manifest.v2+json",
+                                               "digest":  "sha256:1f652f26fae95c865d1cb1407e48234ca0d834d21a3c6458dfe9d4b2af1784df",
+                                               "size":  2213,
+                                               "platform":  {
+                                                                "architecture":  "arm64",
+                                                                "os":  "linux"
+                                                            }
+                                           }
+                                       ],
+                            "controller":  [
+                                               {
+                                                   "mediaType":  "application/vnd.docker.distribution.manifest.v2+json",
+                                                   "digest":  "sha256:bf46e811d291144141b91021495e7cf4a02485987c2937a8f2d5d567288d94d2",
+                                                   "size":  951,
+                                                   "platform":  {
+                                                                    "architecture":  "amd64",
+                                                                    "os":  "linux"
+                                                                }
+                                               },
+                                               {
+                                                   "mediaType":  "application/vnd.docker.distribution.manifest.v2+json",
+                                                   "digest":  "sha256:fa94e085726e1c61f63d5eb544e64e39dbee913c72fb18773e5727af2f0828df",
+                                                   "size":  951,
+                                                   "platform":  {
+                                                                    "architecture":  "arm64",
+                                                                    "os":  "linux"
+                                                                }
+                                               }
+                                           ]
+                        },
+    "auditedFiles":  [
+                         {
+                             "path":  "config/crd/bases/chaos-mesh.org_networkchaos.yaml",
+                             "sha256":  "d151d3d38cfb4e906df457a2927a8bad8872241655b0267e08e3315b1b615974",
+                             "url":  "https://github.com/chaos-mesh/chaos-mesh/blob/e020a2df5a69e99e49d2a3dda9e6be22237fd0d8/config/crd/bases/chaos-mesh.org_networkchaos.yaml"
+                         },
+                         {
+                             "path":  "api/v1alpha1/networkchaos_types.go",
+                             "sha256":  "9be25ed26d9958fbf8c102705e8e882710aeeca02c7d8a5ce1c786025bc5730f",
+                             "url":  "https://github.com/chaos-mesh/chaos-mesh/blob/e020a2df5a69e99e49d2a3dda9e6be22237fd0d8/api/v1alpha1/networkchaos_types.go"
+                         },
+                         {
+                             "path":  "api/v1alpha1/selector.go",
+                             "sha256":  "04634534424e384ebf78c2cd373362801403055753309150c18a1a4225e9398c",
+                             "url":  "https://github.com/chaos-mesh/chaos-mesh/blob/e020a2df5a69e99e49d2a3dda9e6be22237fd0d8/api/v1alpha1/selector.go"
+                         },
+                         {
+                             "path":  "api/v1alpha1/podnetworkchaos_types.go",
+                             "sha256":  "1a1bf869b5deee4426ac8af33bc946d6bea70ddd98775c470c9753ba5273a046",
+                             "url":  "https://github.com/chaos-mesh/chaos-mesh/blob/e020a2df5a69e99e49d2a3dda9e6be22237fd0d8/api/v1alpha1/podnetworkchaos_types.go"
+                         },
+                         {
+                             "path":  "controllers/chaosimpl/networkchaos/trafficcontrol/impl.go",
+                             "sha256":  "e388b23a569e7403ce7decac8d0fb3782ea3ea0cac8e2a781174403f3d66080b",
+                             "url":  "https://github.com/chaos-mesh/chaos-mesh/blob/e020a2df5a69e99e49d2a3dda9e6be22237fd0d8/controllers/chaosimpl/networkchaos/trafficcontrol/impl.go"
+                         },
+                         {
+                             "path":  "controllers/podnetworkchaos/controller.go",
+                             "sha256":  "47e1bfa9415438a020e99d3f19f1a3b8e1be6c99a501f77abbe6deeea8861ac8",
+                             "url":  "https://github.com/chaos-mesh/chaos-mesh/blob/e020a2df5a69e99e49d2a3dda9e6be22237fd0d8/controllers/podnetworkchaos/controller.go"
+                         },
+                         {
+                             "path":  "controllers/podnetworkchaos/tc/tc.go",
+                             "sha256":  "cc220edcd911bc5284c0ed1350b51230edc90519da1c8c04e54ba36a8f2e47ff",
+                             "url":  "https://github.com/chaos-mesh/chaos-mesh/blob/e020a2df5a69e99e49d2a3dda9e6be22237fd0d8/controllers/podnetworkchaos/tc/tc.go"
+                         },
+                         {
+                             "path":  "controllers/common/desiredphase/controller.go",
+                             "sha256":  "1aa20407b64d2e304d1d6e46164fdb7375b1391ba6404c173d0cce2f2973ac5a",
+                             "url":  "https://github.com/chaos-mesh/chaos-mesh/blob/e020a2df5a69e99e49d2a3dda9e6be22237fd0d8/controllers/common/desiredphase/controller.go"
+                         },
+                         {
+                             "path":  "pkg/selector/pod/selector.go",
+                             "sha256":  "4d9a998ad29614478193a73989b8a85b4b70879af47fb0ac7a06ae61774d574e",
+                             "url":  "https://github.com/chaos-mesh/chaos-mesh/blob/e020a2df5a69e99e49d2a3dda9e6be22237fd0d8/pkg/selector/pod/selector.go"
+                         },
+                         {
+                             "path":  "pkg/chaosdaemon/pb/chaosdaemon.proto",
+                             "sha256":  "a34d5d202eb7aa2d3e5e277fb36bef8e60183814bfcbed1c9dc3d54b48397699",
+                             "url":  "https://github.com/chaos-mesh/chaos-mesh/blob/e020a2df5a69e99e49d2a3dda9e6be22237fd0d8/pkg/chaosdaemon/pb/chaosdaemon.proto"
+                         },
+                         {
+                             "path":  "pkg/chaosdaemon/tc_server.go",
+                             "sha256":  "5033f97550e58b4cf6f4064791e1a76be21e07ee395e9d88139b06757b273ecc",
+                             "url":  "https://github.com/chaos-mesh/chaos-mesh/blob/e020a2df5a69e99e49d2a3dda9e6be22237fd0d8/pkg/chaosdaemon/tc_server.go"
+                         },
+                         {
+                             "path":  "helm/chaos-mesh/values.yaml",
+                             "sha256":  "836ab98fee6bd485beec1ecf64691d03ff87d61ff8739dd7cab56253567f542b",
+                             "url":  "https://github.com/chaos-mesh/chaos-mesh/blob/e020a2df5a69e99e49d2a3dda9e6be22237fd0d8/helm/chaos-mesh/values.yaml"
+                         },
+                         {
+                             "path":  "helm/chaos-mesh/templates/controller-manager-rbac.yaml",
+                             "sha256":  "31482c9fe079652675dbc0b61594195d92f597aa202b83e717378644b3ec6f4c",
+                             "url":  "https://github.com/chaos-mesh/chaos-mesh/blob/e020a2df5a69e99e49d2a3dda9e6be22237fd0d8/helm/chaos-mesh/templates/controller-manager-rbac.yaml"
+                         },
+                         {
+                             "path":  "helm/chaos-mesh/templates/chaos-daemon-daemonset.yaml",
+                             "sha256":  "5b108727bd0fd0545f4e78ed6c38a3bacfb068d01504b6d2bc059c1ef883cb1a",
+                             "url":  "https://github.com/chaos-mesh/chaos-mesh/blob/e020a2df5a69e99e49d2a3dda9e6be22237fd0d8/helm/chaos-mesh/templates/chaos-daemon-daemonset.yaml"
+                         }
+                     ],
+    "installation":  "CRD_SCHEMA_ONLY_NO_PROVIDER_WORKLOADS",
+    "faultExecutionEnabled":  false,
+    "trust":  "SHA256 and registry content digests pinned after HTTPS retrieval; release signatures and image vulnerability scan NOT VERIFIED; images NOT EXECUTED"
+}

@@ -74,3 +74,9 @@ documents public/private formats, one-use invocation, crash and uncertainty case
 Ordinary Go tests skip explicitly opted-in cluster demonstrations; record actual
 live executions separately. Fuzz the public index with
 `go test ./internal/kubeexperiment -run '^$' -fuzz '^FuzzCoordinationIndexNeverAuthenticatesExecution$' -fuzztime 10s`.
+
+T2.4 uses `scripts/kind-chaosmesh.ps1 -Action up|test|down` for a **separate**, newly
+owned schema/planning environment. Read [the audit](docs/chaosmesh.md) before
+changing its hard gates. Real external fault tests are disabled; schema dry-run,
+controlled clients and synthetic-provider successes cannot substitute for a real
+Chaos Mesh intervention. Preserve this distinction in evidence and handoffs.

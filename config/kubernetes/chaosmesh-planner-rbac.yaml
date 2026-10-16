@@ -1,0 +1,49 @@
+# Planning only. No Chaos Mesh resource, workload mutation or port-forward grants.
+apiVersion: v1
+kind: ServiceAccount
+metadata: {name: themis-chaosmesh-planner, namespace: themis-test}
+automountServiceAccountToken: false
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata: {name: themis-chaosmesh-planner, namespace: themis-test}
+rules:
+  - apiGroups: [verification.themis.dev]
+    resources: [verificationruns]
+    resourceNames: [external-latency-request]
+    verbs: [get]
+  - apiGroups: [apps]
+    resources: [deployments]
+    resourceNames: [synthetic]
+    verbs: [get]
+  - apiGroups: [apps]
+    resources: [replicasets]
+    resourceNames: [REPLACE_WITH_REPLICA_SET_NAME]
+    verbs: [get]
+  - apiGroups: ['']
+    resources: [pods]
+    verbs: [get, list]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata: {name: themis-chaosmesh-planner, namespace: themis-test}
+subjects: [{kind: ServiceAccount, name: themis-chaosmesh-planner, namespace: themis-test}]
+roleRef: {apiGroup: rbac.authorization.k8s.io, kind: Role, name: themis-chaosmesh-planner}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata: {name: themis-t24-planner-identity}
+rules:
+  - apiGroups: ['']
+    resources: [namespaces]
+    resourceNames: [kube-system, themis-test]
+    verbs: [get]
+  - apiGroups: [authentication.k8s.io]
+    resources: [selfsubjectreviews]
+    verbs: [create]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata: {name: themis-t24-planner-identity}
+subjects: [{kind: ServiceAccount, name: themis-chaosmesh-planner, namespace: themis-test}]
+roleRef: {apiGroup: rbac.authorization.k8s.io, kind: ClusterRole, name: themis-t24-planner-identity}
