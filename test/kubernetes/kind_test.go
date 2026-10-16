@@ -36,11 +36,22 @@ func TestKindDryRun(t *testing.T) {
 		ClusterName, Context     string
 		ClusterUID, NamespaceUID types.UID
 	}
-	data, err := os.ReadFile(filepath.Join(filepath.Dir(path), "ownership.json"))
+	ownerFile := filepath.Join(filepath.Dir(path), "ownership.json")
+	expectedCluster, expectedContext := "themis-t20", "kind-themis-t20"
+	// T2.1 compatibility runs the unchanged dry-run scenarios in its separately
+	// owned cluster. Explicit opt-in never falls back to ambient credentials.
+	if explicit := os.Getenv("THEMIS_KIND_OWNERSHIP_FILE"); explicit != "" {
+		if filepath.Clean(explicit) != filepath.Join(filepath.Dir(path), "bootstrap-owner.json") {
+			t.Fatal("owned compatibility record must accompany the dedicated config")
+		}
+		ownerFile = explicit
+		expectedCluster, expectedContext = "themis-t21", "kind-themis-t21"
+	}
+	data, err := os.ReadFile(ownerFile)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := json.Unmarshal(data, &owner); err != nil || owner.ClusterName != "themis-t20" || owner.Context != "kind-themis-t20" || owner.ClusterUID == "" || owner.NamespaceUID == "" {
+	if err := json.Unmarshal(data, &owner); err != nil || owner.ClusterName != expectedCluster || owner.Context != expectedContext || owner.ClusterUID == "" || owner.NamespaceUID == "" {
 		t.Fatal("complete owned Kind identity required")
 	}
 	config, err := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(&clientcmd.ClientConfigLoadingRules{ExplicitPath: path}, &clientcmd.ConfigOverrides{CurrentContext: owner.Context}).ClientConfig()

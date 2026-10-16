@@ -4,13 +4,16 @@ ifeq ($(OS),Windows_NT)
 GOBIN := bin/themis.exe
 endif
 
-.PHONY: build controller fmt fmt-check vet test race fuzz check
+.PHONY: build controller kube-runner fmt fmt-check vet test race fuzz check
 
 build:
 	$(GO) build -trimpath -o $(GOBIN) ./cmd/themis
 
 controller:
 	$(GO) build -trimpath -o bin/ ./cmd/themis-controller
+
+kube-runner:
+	$(GO) build -trimpath -o bin/ ./cmd/themis-kube ./cmd/themis-kube-fixture
 
 fmt:
 	$(GO) fmt ./...
@@ -34,5 +37,6 @@ fuzz:
 	$(GO) test ./internal/run -run '^$$' -fuzz '^FuzzReplay$$' -fuzztime 10s
 	$(GO) test ./internal/experiment -run '^$$' -fuzz '^FuzzReplayExperiment$$' -fuzztime 10s
 	$(GO) test ./internal/kube -run '^$$' -fuzz '^FuzzDryRunSpec$$' -fuzztime 10s
+	$(GO) test ./internal/kubeexperiment -run '^$$' -fuzz '^FuzzKubernetesJournalNeverTrustsPASS$$' -fuzztime 10s
 
-check: fmt-check vet test build controller
+check: fmt-check vet test build controller kube-runner

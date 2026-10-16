@@ -28,3 +28,10 @@ requirements in a record do not imply an existing execution component.
 | [T026](T026-kubernetes-target-identity.md) | Immutable target identity and deterministic plans |
 | [T027](T027-kubernetes-reconciliation-status.md) | Idempotent status and latched invalidation |
 | [T028](T028-kubernetes-dry-run-only.md) | No Kubernetes assertion or fault execution |
+| [T029](T029-kubernetes-execution-authorization.md) | Separate operator runner and Kubernetes execution grants |
+| [T030](T030-in-cluster-synthetic-fixture.md) | Preinstalled bounded application-path fixture |
+| [T031](T031-pod-identity-and-port-forward.md) | Exact Pod, owner chain, image and boot binding |
+| [T032](T032-kubernetes-fault-expiry.md) | Independent monotonic expiry and retained invocation receipts |
+| [T033](T033-kubernetes-intervention-evidence.md) | Signed request holds, independent measurements and conservative verdicts |
+| [T034](T034-kubernetes-cleanup-and-crashes.md) | Cleanup inventory, crash recovery and immutable history |
+| [T035](T035-kubernetes-experiment-formats.md) | New experiment artifacts preserving the dry-run API |

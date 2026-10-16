@@ -1,0 +1,54 @@
+# Trusted setup substitutes only the freshly observed exact Pod/ReplicaSet names.
+# The runner cannot provision or mutate target workloads.
+apiVersion: v1
+kind: ServiceAccount
+metadata: {name: themis-runner, namespace: themis-test}
+automountServiceAccountToken: false
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata: {name: themis-runner, namespace: themis-test}
+rules:
+  - apiGroups: [verification.themis.dev]
+    resources: [verificationruns]
+    resourceNames: [latency-request]
+    verbs: [get]
+  - apiGroups: [apps]
+    resources: [deployments]
+    resourceNames: [latency-fixture]
+    verbs: [get]
+  - apiGroups: [apps]
+    resources: [replicasets]
+    resourceNames: [REPLACE_WITH_REPLICA_SET_NAME]
+    verbs: [get]
+  - apiGroups: ['']
+    resources: [pods]
+    verbs: [get, list]
+  - apiGroups: ['']
+    resources: [pods/portforward]
+    resourceNames: [REPLACE_WITH_POD_NAME]
+    verbs: [create]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata: {name: themis-runner, namespace: themis-test}
+subjects: [{kind: ServiceAccount, name: themis-runner, namespace: themis-test}]
+roleRef: {apiGroup: rbac.authorization.k8s.io, kind: Role, name: themis-runner}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata: {name: themis-t21-runner-identity}
+rules:
+  - apiGroups: ['']
+    resources: [namespaces]
+    resourceNames: [kube-system, themis-test]
+    verbs: [get]
+  - apiGroups: [authentication.k8s.io]
+    resources: [selfsubjectreviews]
+    verbs: [create]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata: {name: themis-t21-runner-identity}
+subjects: [{kind: ServiceAccount, name: themis-runner, namespace: themis-test}]
+roleRef: {apiGroup: rbac.authorization.k8s.io, kind: ClusterRole, name: themis-t21-runner-identity}

@@ -185,3 +185,7 @@ Primary references: [controller-runtime compatibility](https://github.com/kubern
 [Kind 0.32.0 release and node digests](https://github.com/kubernetes-sigs/kind/releases/tag/v0.32.0),
 [Kubernetes CRD validation/pruning](https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definitions/),
 [HTTP echo publisher](https://github.com/hashicorp/http-echo).
+
+## Separate T2.1 runner
+
+The controller described here remains non-destructive. The separate [owned Kind experiment guide](kubernetes-experiments.md) documents T2.1 execution grants, exact-Pod identity, the preinstalled fixture and its independent expiry. The v1alpha1 preview API and this controller's target permissions are unchanged.

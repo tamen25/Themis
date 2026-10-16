@@ -52,3 +52,11 @@ Use focused commits and PR descriptions explaining the behavior change,
 validation and limitations. Do not include credentials, private contract data or
 generated binaries. Contributions are provided under the repository's
 [Apache-2.0 license](LICENSE).
+
+Owned Kind experiments are separately opt-in. Follow
+[the experiment guide](docs/kubernetes-experiments.md); never point tests at an
+ambient or unrelated cluster. Record real executions separately from local HTTP,
+client-simulation and skipped checks. Preserve the dry-run controller's RBAC and
+API. Public evidence must exclude operator credentials, private authorization
+keys, inventories and local-only guides. Independent review precedes expanding
+the single bounded synthetic fault scope.

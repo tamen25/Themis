@@ -1,0 +1,56 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: themis-fixture
+  namespace: themis-test
+automountServiceAccountToken: false
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: latency-fixture
+  namespace: themis-test
+  labels:
+    app: themis-latency-fixture
+    verification.themis.dev/synthetic: 'true'
+spec:
+  replicas: 1
+  strategy: {type: Recreate}
+  selector:
+    matchLabels: {app: themis-latency-fixture}
+  template:
+    metadata:
+      labels: {app: themis-latency-fixture}
+    spec:
+      serviceAccountName: themis-fixture
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+        - name: fixture
+          image: REPLACE_WITH_OWNED_FIXTURE_DIGEST
+          imagePullPolicy: Never
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: {drop: [ALL]}
+          env:
+            - name: POD_NAME
+              valueFrom: {fieldRef: {fieldPath: metadata.name}}
+            - name: POD_UID
+              valueFrom: {fieldRef: {fieldPath: metadata.uid}}
+          ports: [{containerPort: 8080}]
+          readinessProbe:
+            httpGet: {path: /health, port: 8080}
+            periodSeconds: 1
+          resources:
+            requests: {cpu: 100m, memory: 32Mi}
+            limits: {cpu: '1', memory: 128Mi}
+          volumeMounts:
+            - {name: config, mountPath: /etc/themis, readOnly: true}
+      volumes:
+        - name: config
+          configMap: {name: themis-fixture-config}

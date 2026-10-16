@@ -4,8 +4,8 @@ Themis is an early Go reliability verification project. Its T0 CLI validates
 contracts, creates immutable plans, runs bounded local HTTP checks, and exports
 unsigned reports that can be replayed offline. Experimental T1.1 adds one owned
 synthetic service and response-latency proxy, with explicit authorization,
-independent measurements, bounded expiry and cleanup. Kubernetes, production
-targets and external providers remain unsupported.
+independent measurements, bounded expiry and cleanup. Production targets and
+external providers remain unsupported.
 
 T1.2 adds read-only experiment status, cross-process cancellation, reconciliation
 under damaged journals, explicit operation diagnostics and evidence provenance.
@@ -14,15 +14,23 @@ See [lifecycle and recovery](docs/experiment-lifecycle.md) and the
 
 Experimental T2.0 adds a separate Kubernetes controller for deterministic **dry-run
 previews only**, namespaced VerificationRuns, independent safety policy and narrow
-RBAC. Kubernetes faults and reliability assertion execution are unsupported;
+RBAC. That controller has no fault or reliability assertion execution path;
 preview verdicts stay NOT_RUN or INCONCLUSIVE. See
 [Kind setup and API limits](docs/kubernetes.md) and the
 [Kubernetes threat model](docs/kubernetes-security.md).
 
+Experimental T2.1 adds a separate operator-invoked runner for one preinstalled
+synthetic application-path latency experiment in an explicitly owned Kind cluster.
+It binds approval to the live Pod and proxy boot, independently verifies delay
+and application behavior, and records recovery, expiry and cleanup. The controller
+and its read-only target permissions are unchanged. See the
+[owned Kind experiment guide](docs/kubernetes-experiments.md) for setup, the four
+demonstrations, authorization boundaries and evidence limitations.
+
 ## Build and use
 
-Requires Go 1.26.9 or newer. No cluster, cloud account, database, Docker, Argus or
-Arete is required. The first build downloads the pinned Go modules; Go's automatic
+Requires Go 1.26.9 or newer. The local CLI needs no cluster, cloud account,
+database, Docker, Argus or Arete. The first build downloads the pinned Go modules; Go's automatic
 toolchain selection may also download the required Go patch release.
 
 ```sh
@@ -215,16 +223,18 @@ Themis starts as a modular monolith:
 | `internal/fixture` | Owned service/proxy process, authority, expiry and signed responses |
 | `internal/experiment` | Client observer, state machine, journal, assessment and cleanup |
 | `internal/result` | Execution/result types and evidence-aware verdict aggregation |
+| `internal/kubefault` | Bounded in-Pod fixture protocol, authenticated commands and expiry |
+| `internal/kubeexperiment` | Restricted Kind runner, Pod resolution, measurements and cleanup |
 | `api/schemas` | Embedded, versioned contract schema |
 | `examples` | Valid contract and intentionally invalid contracts |
 | `docs/adr` | Architectural decisions and explicit scope choices |
 
 See [architecture](docs/architecture.md) and [decisions](docs/adr/README.md).
-There are no placeholder adapters, controller or storage packages.
+No generic provider or storage framework is introduced.
 
 T0 has a reviewed local implementation. Experimental T1.1 adds authorized local
 faults and independently observed intervention. Review its implementation and
-execution evidence before extending it. Later milestones may add Kubernetes,
+execution evidence before extending it. Later milestones may add
 PostgreSQL recovery and authenticated end-to-end evidence. Arete, Argus
 and CloudOps remain optional future integrations.
 

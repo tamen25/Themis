@@ -39,3 +39,7 @@ Execution and cleanup require distinct bounded permissions, durable intent,
 idempotent resource identity and expiry enforcement independent of the controller.
 This document designs those binding requirements; none is implemented as a fault
 capability in T2.0. Do not reuse local fixture grants or expand the dry-run Role.
+
+## T2.1 follow-up
+
+The [owned Kind runner](kubernetes-experiments.md) now implements these binding requirements for one fixed synthetic latency experiment, under the single trusted operator model in ADRs T029-T035. It has separate keys/RBAC and never treats this controller's preview as an execution grant. The production, administrator-trust and complete-attestation limitations remain.

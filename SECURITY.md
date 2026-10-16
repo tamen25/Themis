@@ -122,5 +122,25 @@ executionAllowed=true. Previews are unsigned, subject to cross-object read races
 and not execution attestation. Invalidated runs require a new request. Namespace
 allowlisting alone is not future fault authorization. Installer privileges, Docker
 operator access and status forgery risks are documented in the
-[Kubernetes threat model](docs/kubernetes-security.md). No production or T2.1
-fault execution is implemented or authorized.
+[Kubernetes threat model](docs/kubernetes-security.md). That controller has no
+execution authority. Production fault execution remains unsupported.
+
+## Owned Kind experiment boundary
+
+T2.1 uses a separate restricted local operator runner and preinstalled non-root
+fixture. Explicit execution grants bind Kubernetes actor/cluster/namespace/run/
+workload/Pod/container/image and proxy boot identity, parameters, short expiry,
+one-time invocation and a separate cleanup key. A preview or unsigned status is
+never such a grant. The runner cannot patch workloads, delete Pods, create Jobs,
+read Secrets, execute in containers or provision resources. The fixture has no
+API credentials and only a fixed loopback synthetic upstream.
+
+Response latency expires inside the Pod within three seconds, independently of
+runner/controller survival, observations and journal storage. Signed per-request
+proxy hold measurements and independent paired client timing establish bounded
+intervention evidence. Normal post-removal observations and complete cleanup
+are required for PASS. Unsigned replay cannot establish trusted PASS; current
+resource state and historical outcome remain separate. This is not production
+authorization or complete execution attestation. Administrators and the local
+approval-key holder remain trusted. See [the experiment guide](docs/kubernetes-experiments.md)
+and ADRs T029–T035 for limits, private-state handling and the explicit test scope.

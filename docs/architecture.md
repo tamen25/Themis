@@ -146,3 +146,21 @@ status. Fresh API reads feed immutable planning; no local fixture grant or OS
 lock becomes cluster authority. The runner/observation/assertion path is uninvoked,
 so a preview remains NOT_RUN. [Kubernetes architecture](kubernetes.md) and ADRs
 T023-T028 describe UID pins, RBAC, versioning and future authorization requirements.
+
+## Owned Kind execution boundary
+
+T2.1 adds `cmd/themis-kube`, `internal/kubeexperiment` and the independent
+`internal/kubefault` protocol/fixture executable. The runner reads Kubernetes
+through restricted credentials and uses an exact-Pod port-forward to the
+preinstalled fixture. It independently recompiles the preview, freezes the live
+owner chain and container/boot identities, and requires a separate signed
+execution grant. The T2.0 API, controller and its RBAC remain unchanged.
+
+The fixture enforces authenticated single-use application, independent monotonic
+expiry and distinct bounded cleanup authority. The runner journals durable
+intent, collects paired client measurements plus signed per-request proxy holds,
+evaluates the existing pure result semantics, verifies recovery and reports
+cleanup independently. Protected inventory and immutable reconciliation receipts
+preserve history across process death/corruption. No local OS authorization grant
+becomes cluster authority; private-file helpers only protect state. See
+[the execution guide](kubernetes-experiments.md) and ADRs T029–T035.

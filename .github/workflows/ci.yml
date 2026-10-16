@@ -66,6 +66,9 @@ jobs:
       - name: Fuzz Kubernetes dry-run input
         if: runner.os == 'Linux'
         run: go test ./internal/kube -run '^$' -fuzz '^FuzzDryRunSpec$' -fuzztime 10s
+      - name: Fuzz Kubernetes journal trust boundary
+        if: runner.os == 'Linux'
+        run: go test ./internal/kubeexperiment -run '^$' -fuzz '^FuzzKubernetesJournalNeverTrustsPASS$' -fuzztime 10s
 
   kind-dry-run:
     runs-on: ubuntu-latest
@@ -97,3 +100,42 @@ jobs:
         if: always()
         shell: pwsh
         run: ./scripts/kind-down.ps1
+
+  kind-experiments:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@4b73464bb391d4059bd26b0524d20df3927bd417
+        with:
+          go-version: '1.26.x'
+      - name: Install pinned Kind
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force .cache/tools | Out-Null
+          $env:GOBIN = (Resolve-Path .cache/tools).Path
+          go install sigs.k8s.io/kind@v0.32.0
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Create owned synthetic experiment environment
+        shell: pwsh
+        run: ./scripts/kind-experiment.ps1 -Action up
+      - name: Real CLI experiments, process death, expiry and RBAC
+        shell: pwsh
+        run: |
+          $env:THEMIS_KIND_EXPERIMENT_STATE = (Resolve-Path .themis/kind-t21).Path
+          $env:THEMIS_KUBE_RUNNER_BINARY = (Resolve-Path .cache/themis-kube).Path
+          go test -count=1 -v ./test/kubernetesexperiment
+          exit $LASTEXITCODE
+      - name: Preserve T2.0 dry-run behavior
+        shell: pwsh
+        run: |
+          $env:THEMIS_KIND_KUBECONFIG = (Resolve-Path .themis/kind-t21/admin-kubeconfig).Path
+          $env:THEMIS_KIND_OWNERSHIP_FILE = (Resolve-Path .themis/kind-t21/bootstrap-owner.json).Path
+          go test -count=1 -v ./test/kubernetes
+          exit $LASTEXITCODE
+      - name: Tear down owned experiment cluster
+        if: always()
+        shell: pwsh
+        run: ./scripts/kind-experiment.ps1 -Action down
