@@ -197,3 +197,9 @@ own synthetic data, archives or containers. Interruption tests observe actual
 `pg_dump` / `pg_restore` processes before cancellation or killing the runner.
 Use the execution evidence archive for observed results and any failed attempts;
 test source or skipped test names are not evidence of live execution.
+## Separate durable workflow
+
+T3.1's [persistent-volume and SIGKILL workflow](postgres-durable-recovery.md)
+has a different version, two approval scopes, durable archive identity and a
+different explicit recovery-time anchor. The temporary-storage commands and
+contracts documented above retain their existing behavior and formats.

@@ -79,3 +79,16 @@ fault execution or approval command and cannot consume synthetic grants.
 `themis-postgres setup|plan|approve|run|reconcile|replay` is separate from the
 HTTP and Kubernetes CLIs. It operates only on a newly owned local Docker source
 and distinct fresh restore server. See [commands, exits and trust boundaries](postgres-recovery.md).
+## Durable PostgreSQL recovery
+
+`themis-postgres durable` exposes `setup`, `plan`, `approve-prepare`, `prepare`,
+`approve-failure`, `run`, `reconcile`, and `replay`. All accept the original
+private `--state` directory. Setup additionally requires `--endpoint` and
+`--engine-id`; plan requires `--contract`. Both approvals require the reviewed
+`--expect-digest`; failure approval also requires the actual prepared
+`--expect-backup-sha256`. Grants remain private and are not printed.
+
+Exit codes: 0 PASS, 3 FAIL, 4 INCONCLUSIVE, 7 CLEANUP_PENDING, 2 request/admission
+error. Offline replay always exits 4 on valid historical evidence. See the
+[complete two-approval workflow and storage/timing limits](postgres-durable-recovery.md).
+Existing T3.0 commands keep their original namespace, flags and wire formats.

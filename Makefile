@@ -47,5 +47,6 @@ fuzz:
 	$(GO) test ./internal/kubeexperiment -run '^$$' -fuzz '^FuzzCoordinationIndexNeverAuthenticatesExecution$$' -fuzztime 10s
 	$(GO) test ./internal/chaosmesh -run '^$$' -fuzz '^FuzzExternalPlanCannotAuthorizeFault$$' -fuzztime 10s
 	$(GO) test ./internal/postgres -run '^$$' -fuzz '^FuzzContract$$' -fuzztime 10s
+	$(GO) test ./internal/postgres -run '^$$' -fuzz '^FuzzDurableContract$$' -fuzztime 10s
 
 check: fmt-check vet test build controller kube-runner

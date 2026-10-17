@@ -75,6 +75,11 @@ jobs:
       - name: Fuzz closed external-provider admission
         if: runner.os == 'Linux'
         run: go test ./internal/chaosmesh -run '^$' -fuzz '^FuzzExternalPlanCannotAuthorizeFault$' -fuzztime 10s
+      - name: Fuzz PostgreSQL recovery contracts
+        if: runner.os == 'Linux'
+        run: |
+          go test ./internal/postgres -run '^$' -fuzz '^FuzzContract$' -fuzztime 10s
+          go test ./internal/postgres -run '^$' -fuzz '^FuzzDurableContract$' -fuzztime 10s
 
   kind-dry-run:
     runs-on: ubuntu-latest

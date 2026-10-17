@@ -96,3 +96,13 @@ local engine identity, private state and the pinned image; follow
 [the opt-in instructions](docs/postgres-recovery.md#developer-validation).
 Never include raw backup files, private inventories, grants, keys, database
 volumes or credential files in review artifacts. Preserve legitimate testdata.
+## Durable PostgreSQL validation
+
+T3.1's real owned Docker tests are opt-in. Follow
+[durable recovery validation](docs/postgres-durable-recovery.md#validation) with
+new private state/evidence roots; run `TestRealDurable` separately from
+`TestRealPostgres`. This includes real source SIGKILL, partial archive input,
+actual runner process death, and exact-ID cleanup. Skips are not live executions.
+Run `FuzzDurableContract` as well as the historical fuzz campaigns, and compare
+old command/replay formats against an actual committed baseline. Never export
+private state, raw backups, database contents, grant signatures or signing keys.

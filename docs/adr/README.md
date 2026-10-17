@@ -62,3 +62,7 @@ requirements in a record do not imply an existing execution component.
 | [T060](T060-database-provenance.md) | Individual observations without whole-run attestation |
 | [T061](T061-postgres-cleanup.md) | Protected ownership, poisoned journal and crash recovery |
 | [T062](T062-future-database-boundaries.md) | Deferred physical backup, PITR and failover |
+| [T063](T063-durable-logical-storage.md) | Separate persistent mode and bounded independent archive publication |
+| [T064](T064-unclean-source-authority.md) | Two approvals, exact-source SIGKILL and independent cleanup capability |
+| [T065](T065-recovery-clock-and-receipts.md) | Conservative failure interval and process-scoped COMMIT clocks |
+| [T066](T066-durable-recovery-evidence.md) | Real recovery, interruption uncertainty and unchanged offline trust limit |

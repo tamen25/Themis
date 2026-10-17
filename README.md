@@ -277,3 +277,10 @@ and CloudOps remain optional future integrations.
 Read [CONTRIBUTING](CONTRIBUTING.md) before contributing and
 [SECURITY](SECURITY.md) for security boundaries and vulnerability reporting.
 Licensed under [Apache-2.0](LICENSE).
+
+T3.1 adds a separate [durable PostgreSQL recovery workflow](docs/postgres-durable-recovery.md):
+owned persistent source/destination volumes, a validated independent host archive,
+separate SIGKILL approval, independently observed failure, and acknowledged data
+loss/recovery measurements. Use `themis-postgres durable ...`; existing T3.0
+commands remain unchanged. This is an owned local synthetic logical-recovery
+experiment; whole-run signing, physical recovery, WAL/PITR and failover are deferred.

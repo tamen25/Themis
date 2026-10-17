@@ -186,3 +186,14 @@ local OS actor remain trusted; this is not daemon-enforced tenant isolation.
 See the [database-specific authorization, cleanup and evidence boundary](docs/postgres-recovery.md).
 Chaos Mesh execution remains disabled; the PostgreSQL workstream does not solve
 its actuator identity or independent expiry blockers.
+
+T3.1's [durable logical recovery](docs/postgres-durable-recovery.md) uses a
+different authorization version: preparation cannot authorize SIGKILL, and the
+fault grant binds the actual published host backup hash plus exact original
+source and destination identities. Backup receipts bind OS file identity as well
+as content. Execution cannot reuse T3.0 grants. Cleanup independently requires
+the protected sealed original inventory and a separate capability; it survives
+runner death and journal corruption, and never adopts resources from reports.
+The persistent local driver has measured storage guards and a per-file hard
+limit, not a filesystem-wide quota. No power-loss durability or untrusted Docker
+administrator isolation is claimed. Offline replay cannot create trusted PASS.

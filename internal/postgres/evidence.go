@@ -35,6 +35,7 @@ type journal struct {
 	plan, previous string
 	sequence       int
 	poisoned       bool
+	version        string
 }
 
 func (j *journal) append(kind string, detail any) error {
@@ -46,8 +47,12 @@ func (j *journal) append(kind string, detail any) error {
 		j.poisoned = true
 		return e
 	}
-	v := Event{Version: Version, Plan: j.plan, Sequence: j.sequence + 1, OffsetNS: time.Since(j.start).Nanoseconds(), Kind: kind, Detail: b, Previous: j.previous}
-	v.Hash = digest("themis.postgres.event.v1", v)
+	version := j.version
+	if version == "" {
+		version = Version
+	}
+	v := Event{Version: version, Plan: j.plan, Sequence: j.sequence + 1, OffsetNS: time.Since(j.start).Nanoseconds(), Kind: kind, Detail: b, Previous: j.previous}
+	v.Hash = digest(eventDomain(version), v)
 	b, e = json.Marshal(v)
 	if e != nil {
 		j.poisoned = true
@@ -74,6 +79,18 @@ func (j *journal) append(kind string, detail any) error {
 	return nil
 }
 func VerifyJournal(data []byte, plan string) error {
+	return verifyJournal(data, plan, Version)
+}
+func eventDomain(version string) string {
+	if version == DurableVersion {
+		return "themis.postgres.durable.event.v1"
+	}
+	return "themis.postgres.event.v1"
+}
+func VerifyDurableJournal(data []byte, plan string) error {
+	return verifyJournal(data, plan, DurableVersion)
+}
+func verifyJournal(data []byte, plan, version string) error {
 	if len(data) > 1<<20 || len(data) == 0 || data[len(data)-1] != '\n' {
 		return errors.New("journal truncated or oversized")
 	}
@@ -90,7 +107,7 @@ func VerifyJournal(data []byte, plan string) error {
 		h := v.Hash
 		v.Hash = ""
 		seq++
-		if v.Version != Version || v.Plan != plan || v.Sequence != seq || v.Previous != prev || v.OffsetNS < offset || v.Kind == "" || digest("themis.postgres.event.v1", v) != h {
+		if v.Version != version || v.Plan != plan || v.Sequence != seq || v.Previous != prev || v.OffsetNS < offset || v.Kind == "" || digest(eventDomain(version), v) != h {
 			return errors.New("journal chain or identity invalid")
 		}
 		prev = h

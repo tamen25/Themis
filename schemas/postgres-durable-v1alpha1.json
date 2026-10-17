@@ -1,0 +1,110 @@
+{
+    "$schema":  "https://json-schema.org/draft/2020-12/schema",
+    "$id":  "https://themis.invalid/schemas/postgres-durable-v1alpha1.json",
+    "title":  "Owned durable PostgreSQL logical backup with authorized SIGKILL",
+    "type":  "object",
+    "additionalProperties":  false,
+    "required":  [
+                     "version",
+                     "name",
+                     "target",
+                     "workflow",
+                     "storage",
+                     "failure",
+                     "backupMethod",
+                     "restoreMethod",
+                     "timingAnchor",
+                     "scenario",
+                     "maxRecoveryMillis",
+                     "maxLostCommits",
+                     "minReceipts",
+                     "requiredTables",
+                     "integrity",
+                     "cleanupRequired",
+                     "maxRuntimeSeconds",
+                     "maxBackupBytes",
+                     "maxDatabaseBytes",
+                     "maxVolumeBytes",
+                     "maxFileBytes"
+                 ],
+    "properties":  {
+                       "version":  {
+                                       "const":  "themis.postgres-durable/v1alpha1"
+                                   },
+                       "name":  {
+                                    "type":  "string",
+                                    "pattern":  "^[a-z][a-z0-9-]{0,47}$"
+                                },
+                       "target":  {
+                                      "const":  "owned-docker-postgres"
+                                  },
+                       "workflow":  {
+                                        "const":  "pg-logical-persistent-sigkill-v1"
+                                    },
+                       "storage":  {
+                                       "const":  "local-persistent-fixed-workload-v1"
+                                   },
+                       "failure":  {
+                                       "const":  "docker-sigkill"
+                                   },
+                       "backupMethod":  {
+                                            "const":  "pg_dump-custom-1.16.0"
+                                        },
+                       "restoreMethod":  {
+                                             "const":  "pg_restore-single-transaction"
+                                         },
+                       "timingAnchor":  {
+                                            "const":  "last-available-query-start-to-ready"
+                                        },
+                       "scenario":  {
+                                        "enum":  [
+                                                     "healthy",
+                                                     "ack-loss",
+                                                     "missing-receipt",
+                                                     "cleanup-denied",
+                                                     "inflight-crash"
+                                                 ]
+                                    },
+                       "maxRecoveryMillis":  {
+                                                 "maximum":  60000,
+                                                 "type":  "integer",
+                                                 "minimum":  1
+                                             },
+                       "maxLostCommits":  {
+                                              "maximum":  3,
+                                              "type":  "integer",
+                                              "minimum":  0
+                                          },
+                       "minReceipts":  {
+                                           "const":  16
+                                       },
+                       "requiredTables":  {
+                                              "const":  [
+                                                            "accounts",
+                                                            "health",
+                                                            "transactions"
+                                                        ]
+                                          },
+                       "integrity":  {
+                                         "const":  "exact-receipts-and-constraints"
+                                     },
+                       "cleanupRequired":  {
+                                               "const":  true
+                                           },
+                       "maxRuntimeSeconds":  {
+                                                 "const":  120
+                                             },
+                       "maxBackupBytes":  {
+                                              "const":  8388608
+                                          },
+                       "maxDatabaseBytes":  {
+                                                "const":  16777216
+                                            },
+                       "maxVolumeBytes":  {
+                                              "const":  134217728
+                                          },
+                       "maxFileBytes":  {
+                                            "const":  8388608
+                                        }
+                   }
+}

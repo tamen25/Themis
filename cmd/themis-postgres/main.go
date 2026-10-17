@@ -18,6 +18,9 @@ func main() {
 	os.Exit(execute(ctx, os.Args[1:]))
 }
 func execute(ctx context.Context, args []string) int {
+	if len(args) > 0 && args[0] == "durable" {
+		return executeDurable(ctx, args[1:])
+	}
 	if len(args) == 0 {
 		fmt.Fprintln(os.Stderr, "usage: themis-postgres setup|plan|approve|run|reconcile|replay")
 		return 2

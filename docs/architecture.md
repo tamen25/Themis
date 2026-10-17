@@ -214,3 +214,20 @@ restored application checks remain inside this package. It reuses only
 `localstate` protection/locking and pure `result` aggregation. It imports no
 Kubernetes engine and changes no existing provider interface or RBAC.
 See [the recovery architecture and limitations](postgres-recovery.md).
+## Durable PostgreSQL workflow (T3.1)
+
+The concrete `internal/postgres/durable_*` implementation introduces an explicit
+second contract, plan, authority and report format. The existing T3.0 commands
+and wire formats retain their defaults. `cmd/themis-postgres/durable.go` dispatches
+only the new `durable` namespace; no database-provider registry is added.
+
+Installation creates two owned persistent volumes and seals the original
+inventory. Preparation requires its own grant, commits the synthetic source,
+publishes signed host receipts and validates/syncs an independent host archive.
+Only then can a second grant bind SIGKILL once to that actual archive digest and
+exact original source identity. The runner observes stopped state independently,
+restores to the fresh distinct destination, verifies actual application behavior,
+and compares reloaded receipts. Independent cleanup ignores execution journals
+as authority and preserves historical bytes. See
+[durable recovery](postgres-durable-recovery.md) and ADRs T063–T066 for storage,
+clock and provenance limits and deferred physical/WAL/failover methods.
