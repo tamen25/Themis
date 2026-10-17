@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://themis.dev/schemas/postgres-replication-v1alpha1.json",
+  "title": "Owned disposable PostgreSQL synchronous streaming failover",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "name", "workflow", "scenario", "maxFailoverMillis", "maxLostCommits"],
+  "properties": {
+    "version": {"const": "themis.postgres-replication/v1alpha1"},
+    "name": {"type": "string", "pattern": "^[a-z][a-z0-9-]{0,62}$"},
+    "workflow": {"const": "remote-apply-fenced-failover-v1"},
+    "scenario": {"enum": ["healthy", "time-violation", "missing-receipt", "cleanup-denied"]},
+    "maxFailoverMillis": {"type": "integer", "minimum": 1, "maximum": 60000},
+    "maxLostCommits": {"const": 0}
+  }
+}

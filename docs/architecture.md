@@ -244,3 +244,18 @@ observes SIGKILL, independently rechecks retained bytes, proves a paused target
 and exact data, then observes promotion and committed readiness. Separate
 inventory-based cleanup preserves history. See [protocol](postgres-pitr.md) and
 ADRs T067–T070. No provider registry, scheduler or Kubernetes permission changes.
+
+## Physical streaming failover (T3.3)
+
+`internal/postgres/replication_*` and the existing binary's `replication` namespace
+implement one concrete two-instance workflow. New contracts, plans, prepared seals
+and separate preparation/termination/promotion/cleanup key domains preserve every
+existing recovery format. Setup physically clones a standby; execution verifies
+effective synchronous state and host COMMIT receipts before an approved primary
+termination. Removing the exact stopped original container and observing absence
+fences its identity before the independently approved standby promotion. Actual
+timeline, data and committed write/read checks establish application recovery.
+One monotonic runner clock bounds recovery; original-inventory cleanup and unsigned
+offline provenance retain their earlier safety principles. See [protocol and
+limits](postgres-replication.md) and ADRs T071–T073. No controller, runner RBAC,
+Chaos Mesh actuator or generic database framework changes.

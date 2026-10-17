@@ -49,5 +49,6 @@ fuzz:
 	$(GO) test ./internal/postgres -run '^$$' -fuzz '^FuzzContract$$' -fuzztime 10s
 	$(GO) test ./internal/postgres -run '^$$' -fuzz '^FuzzDurableContract$$' -fuzztime 10s
 	$(GO) test ./internal/postgres -run '^$$' -fuzz '^FuzzPITRUntrustedRecoveryData$$' -fuzztime 10s
+	$(GO) test ./internal/postgres -run '^$$' -fuzz '^FuzzReplicationUntrustedEvidence$$' -fuzztime 10s
 
 check: fmt-check vet test build controller kube-runner

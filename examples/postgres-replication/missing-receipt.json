@@ -1,0 +1,8 @@
+{
+    "version":  "themis.postgres-replication/v1alpha1",
+    "name":  "streaming-failover",
+    "workflow":  "remote-apply-fenced-failover-v1",
+    "scenario":  "missing-receipt",
+    "maxFailoverMillis":  60000,
+    "maxLostCommits":  0
+}

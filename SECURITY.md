@@ -209,3 +209,22 @@ backups and WAL include authentication data and remain private, along with
 credentials and capabilities. Public hashes, receipts and sanitized logs are
 not whole-run execution attestation. Cleanup survives damaged history but
 requires the sealed original inventory and separate unexpired capability.
+
+T3.3's [streaming failover](docs/postgres-replication.md) admits only a new owned
+primary/physical-standby pair on one internal local Docker network, with no host
+database ports. Separate keys authorize preparation, primary termination/fencing,
+standby promotion and cleanup. Termination must be independently observed before
+the exact stopped primary container is removed and its absence verified. Fresh
+absence, original read-only standby identity, receipt coverage, journal integrity
+and a distinct grant gate the one-use promotion. Kill/promotion replies alone
+cannot establish safe application recovery. Docker admins and the local actor
+remain trusted; they can bypass this boundary or recreate containers from retained
+data. No production or Byzantine split-brain claim exists.
+
+Fixed SCRAM replication credentials stay in private files/stdin and are redacted
+from retained logs. Slots and archiving are disabled; finite writes, enforced
+memory/process/file limits and measured database/WAL/volume guards bound this
+experiment. There is no filesystem-wide persistent-volume quota. Missing replay,
+acknowledgements, cancellation or damaged intent blocks PASS; ambiguous effects
+never resume. Cleanup uses original inventory and cannot authenticate history.
+Offline replay always downgrades unsigned whole-run PASS to INCONCLUSIVE.

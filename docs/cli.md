@@ -1,5 +1,12 @@
 # CLI reference
 
+`themis-postgres replication` provides `setup`, `plan`, `approve-prepare`, `prepare`,
+`approve-termination`, `approve-promotion`, `run`, `reconcile` and `replay` for one
+newly owned local physical streaming pair. Termination and promotion require
+separately scoped approvals of the actual prepared digest. See [commands, exit
+codes and safety gates](postgres-replication.md). Existing recovery commands retain
+their behavior and wire formats.
+
 The separate owned Kind binary supports `cancel --run-directory`,
 `status --run-directory`, `reconcile --run-directory` and
 `verify -f events.jsonl [--expect-plan-digest DIGEST]`.

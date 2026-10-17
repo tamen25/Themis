@@ -81,6 +81,7 @@ jobs:
           go test ./internal/postgres -run '^$' -fuzz '^FuzzContract$' -fuzztime 10s
           go test ./internal/postgres -run '^$' -fuzz '^FuzzDurableContract$' -fuzztime 10s
           go test ./internal/postgres -run '^$' -fuzz '^FuzzPITRUntrustedRecoveryData$' -fuzztime 10s
+          go test ./internal/postgres -run '^$' -fuzz '^FuzzReplicationUntrustedEvidence$' -fuzztime 10s
 
   kind-dry-run:
     runs-on: ubuntu-latest

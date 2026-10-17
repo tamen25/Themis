@@ -70,3 +70,6 @@ requirements in a record do not imply an existing execution component.
 | [T068](T068-physical-backup-wal.md) | Manifest-verified physical backup and independently retained WAL |
 | [T069](T069-pitr-target-and-loss.md) | Exact recovery target, physical identity and acknowledged loss |
 | [T070](T070-pitr-interruption-cleanup.md) | One-use interruption semantics and independent original-resource cleanup |
+| [T071](T071-streaming-failover-safety.md) | Owned physical streaming pair and separate fencing/promotion authority |
+| [T072](T072-replication-acknowledgement.md) | Effective remote_apply semantics and independent COMMIT/replica evidence |
+| [T073](T073-failover-clock-and-recovery.md) | Conservative time interval, one-use failover and historical cleanup |

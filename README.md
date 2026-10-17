@@ -293,3 +293,11 @@ inspection, observed promotion, and independent cleanup. `themis-postgres pitr`
 keeps target fidelity separate from all acknowledged data loss. This remains a
 disposable local synthetic experiment; failover and whole-run attestation remain
 outside its scope.
+
+T3.3 adds [synchronous streaming replication and controlled failover](docs/postgres-replication.md)
+through `themis-postgres replication`: one newly owned physical standby, observed
+remote_apply semantics, separate termination and promotion grants, independent
+primary fencing, timeline/write-readiness checks and exact acknowledged loss.
+Time objectives use conservative uncertainty bounds. Cleanup survives runner death
+without rewriting history. This remains a disposable local synthetic experiment;
+automated HA, existing databases and whole-run attestation are excluded.

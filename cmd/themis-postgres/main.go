@@ -18,6 +18,9 @@ func main() {
 	os.Exit(execute(ctx, os.Args[1:]))
 }
 func execute(ctx context.Context, args []string) int {
+	if len(args) > 0 && args[0] == "replication" {
+		return executeReplication(ctx, args[1:])
+	}
 	if len(args) > 0 && args[0] == "pitr" {
 		return executePITR(ctx, args[1:])
 	}

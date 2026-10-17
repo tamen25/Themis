@@ -82,6 +82,9 @@ func VerifyJournal(data []byte, plan string) error {
 	return verifyJournal(data, plan, Version)
 }
 func eventDomain(version string) string {
+	if version == ReplicationVersion {
+		return "themis.postgres.replication.event.v1"
+	}
 	if version == PITRVersion {
 		return "themis.postgres.pitr.event.v1"
 	}
