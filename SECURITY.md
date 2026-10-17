@@ -1,5 +1,16 @@
 # Security policy
 
+T4.0 [evidence publication](docs/evidence-bundles.md) authenticates publisher
+assertions about artifact bytes. External current, unrevoked trust policy is
+required; embedded keys never grant publisher trust. Offline execution stays
+NOT_INDEPENDENTLY_ATTESTED even for valid trusted PASS artifacts. The dedicated
+signer uses owner-only OS protection, not hardware-backed keys or independent
+human authentication. Curated exports exclude private runtime inventory and
+operational secrets. The PostgreSQL public projection retains opaque original
+plan commitments and explicitly cannot recompile the withheld private plan.
+Archive/resource limits, publication races, key rotation, clock and filesystem
+limitations are part of that protocol. Evidence code grants no fault authority.
+
 Themis is pre-release software. No stable release or production fault execution
 is supported. Use synthetic data in isolated local/test environments.
 

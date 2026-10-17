@@ -1,0 +1,65 @@
+{
+  "Storage": {
+    "primary": {
+      "DatabaseBytes": 7943871,
+      "VolumeBytes": 40172562,
+      "AvailableBytes": 953890549760,
+      "WALBytes": 8388608
+    },
+    "standby": {
+      "DatabaseBytes": 7943871,
+      "VolumeBytes": 34119950,
+      "AvailableBytes": 953890263040,
+      "WALBytes": 2097152
+    }
+  },
+  "Version": "themis.postgres-replication/v1alpha1",
+  "Plan": "23b70a50e0177b4f8de3fd1fea62f4d25eab5c3d06ab7561ba3052566691c233",
+  "Inventory": "84d8e526d89acfc9360cba189aefaba675b8d637d1b644928c58982df8278ecc",
+  "Invocation": "1ebcb5ec003d26fd16d830810e74c54880a9355c00f3c278f0513993236cc99f",
+  "ReceiptHash": "452541c48c07f846451a1f4dfb2ffceaadd4e71a2871b77c8a3554786474cd76",
+  "Schema": "{\"columns\" : [{\"table_name\":\"accounts\",\"ordinal_position\":1,\"column_name\":\"id\",\"data_type\":\"integer\",\"is_nullable\":\"NO\"}, \n {\"table_name\":\"accounts\",\"ordinal_position\":2,\"column_name\":\"balance\",\"data_type\":\"bigint\",\"is_nullable\":\"NO\"}, \n {\"table_name\":\"health\",\"ordinal_position\":1,\"column_name\":\"singleton\",\"data_type\":\"integer\",\"is_nullable\":\"NO\"}, \n {\"table_name\":\"health\",\"ordinal_position\":2,\"column_name\":\"counter\",\"data_type\":\"integer\",\"is_nullable\":\"NO\"}, \n {\"table_name\":\"transactions\",\"ordinal_position\":1,\"column_name\":\"id\",\"data_type\":\"integer\",\"is_nullable\":\"NO\"}, \n {\"table_name\":\"transactions\",\"ordinal_position\":2,\"column_name\":\"payload\",\"data_type\":\"text\",\"is_nullable\":\"NO\"}], \"constraints\" : [{\"name\":\"accounts\",\"definition\":\"CHECK ((balance \u003e= 0))\"}, \n {\"name\":\"accounts\",\"definition\":\"CHECK ((id = ANY (ARRAY[1, 2])))\"}, \n {\"name\":\"accounts\",\"definition\":\"NOT NULL balance\"}, \n {\"name\":\"accounts\",\"definition\":\"NOT NULL id\"}, \n {\"name\":\"accounts\",\"definition\":\"PRIMARY KEY (id)\"}, \n {\"name\":\"health\",\"definition\":\"CHECK ((counter \u003e= 0))\"}, \n {\"name\":\"health\",\"definition\":\"CHECK ((singleton = 1))\"}, \n {\"name\":\"health\",\"definition\":\"NOT NULL counter\"}, \n {\"name\":\"health\",\"definition\":\"NOT NULL singleton\"}, \n {\"name\":\"health\",\"definition\":\"PRIMARY KEY (singleton)\"}, \n {\"name\":\"transactions\",\"definition\":\"CHECK (((id \u003e= 1) AND (id \u003c= 64)))\"}, \n {\"name\":\"transactions\",\"definition\":\"CHECK ((payload ~ '^[a-f0-9]{64}$'::text))\"}, \n {\"name\":\"transactions\",\"definition\":\"NOT NULL id\"}, \n {\"name\":\"transactions\",\"definition\":\"NOT NULL payload\"}, \n {\"name\":\"transactions\",\"definition\":\"PRIMARY KEY (id)\"}]}",
+  "State": {
+    "Primary": {
+      "database": "themis_recovery",
+      "system": "7697692385772593216",
+      "boot": "2026-10-17 17:37:53.846312+00",
+      "version": "180006"
+    },
+    "Standby": {
+      "database": "themis_recovery",
+      "system": "7697692385772593216",
+      "boot": "2026-10-17 17:37:57.505787+00",
+      "version": "180006"
+    },
+    "SynchronousStandbyNames": "FIRST 1 (themis_standby)",
+    "SynchronousCommit": "remote_apply",
+    "SenderState": "streaming",
+    "SyncState": "sync",
+    "SenderUser": "themis_repl",
+    "SenderApplication": "themis_standby",
+    "SenderAddress": "172.23.0.3",
+    "CurrentLSN": "0/E54540",
+    "SentLSN": "0/E54540",
+    "WriteLSN": "0/E54540",
+    "FlushLSN": "0/E54540",
+    "ReplayLSN": "0/E54540",
+    "ReceiverState": "streaming",
+    "ReceiverHost": "172.23.0.2",
+    "ReceiverPort": 5432,
+    "ReceivedLSN": "0/E54540",
+    "ReplayedLSN": "0/E54540",
+    "InRecovery": true,
+    "ReadOnly": true,
+    "Fsync": true,
+    "FullPageWrites": true,
+    "PrimaryWritable": true,
+    "ReplayPaused": false,
+    "AuthenticationVerified": true,
+    "Slots": 0
+  },
+  "LastAckLSN": "0/E54540",
+  "Receipts": 20,
+  "Digest": "208a9ee2419d52cf25b0027224fb74a58b87ae6e069d359889e68ba01d4edb2d",
+  "Signature": "iOQLRq7eNcgoS9Fm5vnWwUiAmYuOwksjHZ11kJe/JKzSfELu+ZdisknhAGH/4KXs6r2OKSLjviyBN5AP80pgDg=="
+}

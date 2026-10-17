@@ -27,7 +27,7 @@ jobs:
       - name: Check formatting
         shell: bash
         run: |
-          files=$(gofmt -l cmd internal api examples test)
+          files=$(gofmt -l cmd internal pkg api examples test)
           if [ -n "$files" ]; then
             printf '%s\n' "$files"
             exit 1
@@ -82,6 +82,12 @@ jobs:
           go test ./internal/postgres -run '^$' -fuzz '^FuzzDurableContract$' -fuzztime 10s
           go test ./internal/postgres -run '^$' -fuzz '^FuzzPITRUntrustedRecoveryData$' -fuzztime 10s
           go test ./internal/postgres -run '^$' -fuzz '^FuzzReplicationUntrustedEvidence$' -fuzztime 10s
+      - name: Fuzz evidence manifests, archives and signatures
+        if: runner.os == 'Linux'
+        run: |
+          go test ./pkg/evidence -run '^$' -fuzz '^FuzzManifest$' -fuzztime 10s
+          go test ./pkg/evidence -run '^$' -fuzz '^FuzzArchive$' -fuzztime 10s
+          go test ./pkg/evidence -run '^$' -fuzz '^FuzzSignature$' -fuzztime 10s
 
   kind-dry-run:
     runs-on: ubuntu-latest

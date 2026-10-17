@@ -36,9 +36,19 @@ type EvidenceVerification struct {
 // VerifyEvidence reuses the live pure evaluator. It verifies signatures against
 // the frozen embedded fixture key, not an independent trust store or attestation.
 func VerifyEvidence(path, expectedDigest string) (EvidenceVerification, error) {
+	events, err := ReadJournal(path)
+	return verifyEvidenceEvents(events, expectedDigest, err)
+}
+
+// VerifyEvidenceBytes is a pure offline entry point over a frozen artifact.
+func VerifyEvidenceBytes(data []byte, expectedDigest string) (EvidenceVerification, error) {
+	events, err := ReadJournalBytes(data)
+	return verifyEvidenceEvents(events, expectedDigest, err)
+}
+
+func verifyEvidenceEvents(events []Event, expectedDigest string, err error) (EvidenceVerification, error) {
 	r := EvidenceVerification{Version: VerificationVersion, JournalIntegrity: "INVALID", TrustedExecutionVerdict: result.Inconclusive, CandidateVerdict: result.Inconclusive,
 		Problems: []string{}, Limitations: []string{"Journal, authorization summary, phase assignment and client timing are unsigned claims.", "Fixture signatures are checked against the embedded plan key; that key and execution authorization are not independently attested.", "Individual signed fixture responses do not authenticate the historical evidence bundle or establish a trusted execution PASS."}}
-	events, err := ReadJournal(path)
 	if err != nil {
 		return r, err
 	}

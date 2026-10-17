@@ -1,0 +1,653 @@
+{
+  "version": "themis.postgres-replication/v1alpha1",
+  "run": "8bf1fa4fa185ac3616b8e13bb680e0aabbf1e0c48e8aacac4bcedf8ffe314da6",
+  "plan": "f85a3402f58dfc0946972bffde5ed0539352e0936c81173be35f079f2311a9dc",
+  "executionPlan": "84580fd989edc262a6fe228c905a8f872aa44754d1ef6ba4e9df26fac0a92c38",
+  "verdict": "FAIL",
+  "execution": "FAILED",
+  "liveTrustedExecution": true,
+  "provenance": "live owned local physical streaming failover; host receipt signatures scoped to bytes; whole execution unsigned",
+  "at": "2026-10-17T17:39:15.6341279Z",
+  "measurements": {
+    "StorageBefore": {
+      "primary": {
+        "DatabaseBytes": 7943871,
+        "VolumeBytes": 40172566,
+        "AvailableBytes": 953818132480,
+        "WALBytes": 8388608
+      },
+      "standby": {
+        "DatabaseBytes": 7943871,
+        "VolumeBytes": 34120027,
+        "AvailableBytes": 953810907136,
+        "WALBytes": 2097152
+      }
+    },
+    "StorageAfter": {
+      "DatabaseBytes": 7943871,
+      "VolumeBytes": 35178112,
+      "AvailableBytes": 953805123584,
+      "WALBytes": 3145768
+    },
+    "Prepared": {
+      "Storage": {
+        "primary": {
+          "DatabaseBytes": 7943871,
+          "VolumeBytes": 40172566,
+          "AvailableBytes": 953855639552,
+          "WALBytes": 8388608
+        },
+        "standby": {
+          "DatabaseBytes": 7943871,
+          "VolumeBytes": 34120027,
+          "AvailableBytes": 953846243328,
+          "WALBytes": 2097152
+        }
+      },
+      "Version": "themis.postgres-replication/v1alpha1",
+      "Plan": "f85a3402f58dfc0946972bffde5ed0539352e0936c81173be35f079f2311a9dc",
+      "Inventory": "ca843a6a2aa2e04c919e918a010d352ff71ef871b371871877603cad0472eae1",
+      "Invocation": "1c17c12561df2dfe3942ad91e3fa87eba16850c6cffad10b8300a65711ad5a2f",
+      "ReceiptHash": "435c563ae99046d6b331cd57c77dcec9a8080b3d61e35f851c2e0d83eedf4631",
+      "Schema": "{\"columns\" : [{\"table_name\":\"accounts\",\"ordinal_position\":1,\"column_name\":\"id\",\"data_type\":\"integer\",\"is_nullable\":\"NO\"}, \n {\"table_name\":\"accounts\",\"ordinal_position\":2,\"column_name\":\"balance\",\"data_type\":\"bigint\",\"is_nullable\":\"NO\"}, \n {\"table_name\":\"health\",\"ordinal_position\":1,\"column_name\":\"singleton\",\"data_type\":\"integer\",\"is_nullable\":\"NO\"}, \n {\"table_name\":\"health\",\"ordinal_position\":2,\"column_name\":\"counter\",\"data_type\":\"integer\",\"is_nullable\":\"NO\"}, \n {\"table_name\":\"transactions\",\"ordinal_position\":1,\"column_name\":\"id\",\"data_type\":\"integer\",\"is_nullable\":\"NO\"}, \n {\"table_name\":\"transactions\",\"ordinal_position\":2,\"column_name\":\"payload\",\"data_type\":\"text\",\"is_nullable\":\"NO\"}], \"constraints\" : [{\"name\":\"accounts\",\"definition\":\"CHECK ((balance \u003e= 0))\"}, \n {\"name\":\"accounts\",\"definition\":\"CHECK ((id = ANY (ARRAY[1, 2])))\"}, \n {\"name\":\"accounts\",\"definition\":\"NOT NULL balance\"}, \n {\"name\":\"accounts\",\"definition\":\"NOT NULL id\"}, \n {\"name\":\"accounts\",\"definition\":\"PRIMARY KEY (id)\"}, \n {\"name\":\"health\",\"definition\":\"CHECK ((counter \u003e= 0))\"}, \n {\"name\":\"health\",\"definition\":\"CHECK ((singleton = 1))\"}, \n {\"name\":\"health\",\"definition\":\"NOT NULL counter\"}, \n {\"name\":\"health\",\"definition\":\"NOT NULL singleton\"}, \n {\"name\":\"health\",\"definition\":\"PRIMARY KEY (singleton)\"}, \n {\"name\":\"transactions\",\"definition\":\"CHECK (((id \u003e= 1) AND (id \u003c= 64)))\"}, \n {\"name\":\"transactions\",\"definition\":\"CHECK ((payload ~ '^[a-f0-9]{64}$'::text))\"}, \n {\"name\":\"transactions\",\"definition\":\"NOT NULL id\"}, \n {\"name\":\"transactions\",\"definition\":\"NOT NULL payload\"}, \n {\"name\":\"transactions\",\"definition\":\"PRIMARY KEY (id)\"}]}",
+      "State": {
+        "Primary": {
+          "database": "themis_recovery",
+          "system": "7697692640632565830",
+          "boot": "2026-10-17 17:38:53.125672+00",
+          "version": "180006"
+        },
+        "Standby": {
+          "database": "themis_recovery",
+          "system": "7697692640632565830",
+          "boot": "2026-10-17 17:38:57.863979+00",
+          "version": "180006"
+        },
+        "SynchronousStandbyNames": "FIRST 1 (themis_standby)",
+        "SynchronousCommit": "remote_apply",
+        "SenderState": "streaming",
+        "SyncState": "sync",
+        "SenderUser": "themis_repl",
+        "SenderApplication": "themis_standby",
+        "SenderAddress": "172.23.0.3",
+        "CurrentLSN": "0/E54540",
+        "SentLSN": "0/E54540",
+        "WriteLSN": "0/E54540",
+        "FlushLSN": "0/E54540",
+        "ReplayLSN": "0/E54540",
+        "ReceiverState": "streaming",
+        "ReceiverHost": "172.23.0.2",
+        "ReceiverPort": 5432,
+        "ReceivedLSN": "0/E54540",
+        "ReplayedLSN": "0/E54540",
+        "InRecovery": true,
+        "ReadOnly": true,
+        "Fsync": true,
+        "FullPageWrites": true,
+        "PrimaryWritable": true,
+        "ReplayPaused": false,
+        "AuthenticationVerified": true,
+        "Slots": 0
+      },
+      "LastAckLSN": "0/E54540",
+      "Receipts": 20,
+      "Digest": "84580fd989edc262a6fe228c905a8f872aa44754d1ef6ba4e9df26fac0a92c38",
+      "Signature": "+/qu60tKC00rBWTsOMj8tbC1s+6khlD3d9tGY5a8W4MYm7mVaqaTY9Qhin5CEwk3MvdPKMSohvm0hcjVFGFpBA=="
+    },
+    "Authorization": true,
+    "ReplicationVerified": true,
+    "FailureObserved": true,
+    "Fenced": true,
+    "PrimaryAbsentAfterReady": true,
+    "BeforeFailure": {
+      "Primary": {
+        "database": "themis_recovery",
+        "system": "7697692640632565830",
+        "boot": "2026-10-17 17:38:53.125672+00",
+        "version": "180006"
+      },
+      "Standby": {
+        "database": "themis_recovery",
+        "system": "7697692640632565830",
+        "boot": "2026-10-17 17:38:57.863979+00",
+        "version": "180006"
+      },
+      "SynchronousStandbyNames": "FIRST 1 (themis_standby)",
+      "SynchronousCommit": "remote_apply",
+      "SenderState": "streaming",
+      "SyncState": "sync",
+      "SenderUser": "themis_repl",
+      "SenderApplication": "themis_standby",
+      "SenderAddress": "172.23.0.3",
+      "CurrentLSN": "0/E545B0",
+      "SentLSN": "0/E545B0",
+      "WriteLSN": "0/E545B0",
+      "FlushLSN": "0/E545B0",
+      "ReplayLSN": "0/E545B0",
+      "ReceiverState": "streaming",
+      "ReceiverHost": "172.23.0.2",
+      "ReceiverPort": 5432,
+      "ReceivedLSN": "0/E545B0",
+      "ReplayedLSN": "0/E545B0",
+      "InRecovery": true,
+      "ReadOnly": true,
+      "Fsync": true,
+      "FullPageWrites": true,
+      "PrimaryWritable": true,
+      "ReplayPaused": false,
+      "AuthenticationVerified": true,
+      "Slots": 0
+    },
+    "Timeline": {
+      "Anchor": "last-available-query-start-to-ready",
+      "IntentNS": 3937648600,
+      "LastAvailableStartNS": 4619839700,
+      "LastAvailableEndNS": 4802376200,
+      "KillStartNS": 6945312400,
+      "KillEndNS": 7141535900,
+      "KillExit": 0,
+      "KillAcknowledged": true,
+      "KillAmbiguous": false,
+      "FirstUnavailableStartNS": 7145036900,
+      "FirstUnavailableEndNS": 7552748100,
+      "RestoreStartNS": 10148485600,
+      "ReadyNS": 12382657600,
+      "FailureUncertaintyNS": 2932908400,
+      "RecoveryUpperNS": 7762817900,
+      "RecoveryLowerNS": 4829909500,
+      "Clock": "one runner monotonic clock; last primary committed write to promoted committed write/read; preparation receipt clock separate"
+    },
+    "FenceStartNS": 7936048400,
+    "FenceEndNS": 8181136600,
+    "PromotionStartNS": 10148485600,
+    "PromotionEndNS": 10419583500,
+    "FenceExit": 0,
+    "PromotionExit": 0,
+    "FenceAcknowledged": true,
+    "PromotionAcknowledged": true,
+    "PromotionObserved": true,
+    "PromotionObservation": "f|00000002|",
+    "TimelineHistory": "1\t0/E545B0\tno recovery target specified\n",
+    "Destination": {
+      "database": "themis_recovery",
+      "system": "7697692640632565830",
+      "boot": "2026-10-17 17:38:57.863979+00",
+      "version": "180006"
+    },
+    "LastReceivedLSN": "0/E545B0",
+    "LastReplayedLSN": "0/E545B0",
+    "Rows": [
+      {
+        "ID": 1,
+        "Payload": "0eb77c7e773c62b112fdf7c2877ccb5c97586a1ff7ca23baa308da5ae4d43c3b",
+        "XID": "761"
+      },
+      {
+        "ID": 2,
+        "Payload": "a5bb4edb24a84754068d0a3c3d012c87d5686f24e26142df0b03873956797a44",
+        "XID": "762"
+      },
+      {
+        "ID": 3,
+        "Payload": "e8b830ca3991f9dc00b922a7dbab8f4aa6b2ab76a7c4b574f765748648312cf0",
+        "XID": "763"
+      },
+      {
+        "ID": 4,
+        "Payload": "b64ba35e369de912d33a1ba6f5b64edb387f4fe259b603d1421102347ee4c68d",
+        "XID": "764"
+      },
+      {
+        "ID": 5,
+        "Payload": "121f517790be85642c5ffba09e2ed3d44e7f275ca4b2d5226ac2b93795909652",
+        "XID": "765"
+      },
+      {
+        "ID": 6,
+        "Payload": "b238985e9164de1186a3aecb498d5e9f3612a2fe4451daef3c4f8c62a408c7cd",
+        "XID": "766"
+      },
+      {
+        "ID": 7,
+        "Payload": "609e77999da90a44d38da72474bc8caa4cbf4cd0176f9d3d488048ca4ac7a82b",
+        "XID": "767"
+      },
+      {
+        "ID": 8,
+        "Payload": "4c98765d3e9f60b95f2818d46a11981dd30de436c806d556582c9e7aac08ea0f",
+        "XID": "768"
+      },
+      {
+        "ID": 9,
+        "Payload": "668bd25b7b72460c16c4f57c88d1d61db57a24d5ef8a3b6f436689e1f0d5047d",
+        "XID": "769"
+      },
+      {
+        "ID": 10,
+        "Payload": "1e96544e5dc154cf5c8d32fc8cd39355da430dd09828ea13afdaaa70166bd143",
+        "XID": "770"
+      },
+      {
+        "ID": 11,
+        "Payload": "66e1958f192b8cf696627803d383221aa2a0d4bb09f0c5cd67c3bcfef02af0c1",
+        "XID": "771"
+      },
+      {
+        "ID": 12,
+        "Payload": "ebb02d373fe28e79bb51788768b94a4907b72aa5f1baeb5f501e972ec61da8ba",
+        "XID": "772"
+      },
+      {
+        "ID": 13,
+        "Payload": "e15420f450044edf83fff51057eeae78689a7f0de5e26a7245fe2c30e53a8c91",
+        "XID": "773"
+      },
+      {
+        "ID": 14,
+        "Payload": "b75f782d5395d6817a655ebb4f4d8883860aa22830f5817934e4ef98c15e380d",
+        "XID": "774"
+      },
+      {
+        "ID": 15,
+        "Payload": "ae85e5007df97b9211d6af52b1db6eea3142f1bdf0ff69405df89e1fcec7b5f7",
+        "XID": "775"
+      },
+      {
+        "ID": 16,
+        "Payload": "e0aaf2836957b635c1bf9de9f7da1901540e6be0f68d78fbdabe87a93e136289",
+        "XID": "776"
+      },
+      {
+        "ID": 17,
+        "Payload": "a848f4db2e3cb4f968f5b3c9186119fff14b6ac1b013d43c174dd43ca6edfb1c",
+        "XID": "777"
+      },
+      {
+        "ID": 18,
+        "Payload": "30c5b60c1ecf26b215663faa47fc8ca7c5acc84f8d6acd505add74a24feab15d",
+        "XID": "778"
+      },
+      {
+        "ID": 19,
+        "Payload": "6ea0b0120a85a137d4b79206e2d80dd63e92e45213b9731e040d6649e3bd31e7",
+        "XID": "779"
+      },
+      {
+        "ID": 20,
+        "Payload": "4644d937331aa3796822c4f5c7dbefeec63bcb3043f3614c443426b47d3e4baa",
+        "XID": "780"
+      }
+    ],
+    "Receipts": [
+      {
+        "Version": "themis.postgres-replication/v1alpha1",
+        "Plan": "f85a3402f58dfc0946972bffde5ed0539352e0936c81173be35f079f2311a9dc",
+        "Session": "7d14551393b5e7018039eae4d939a4f4a84491ff04316414b80f2bf9f3f7639a",
+        "ID": 1,
+        "Payload": "0eb77c7e773c62b112fdf7c2877ccb5c97586a1ff7ca23baa308da5ae4d43c3b",
+        "XID": "761",
+        "Mode": "remote_apply",
+        "FlushLSN": "0/E52908",
+        "AckOffsetNS": 3725715100,
+        "AckAtUTC": "2026-10-17T17:39:05.9406438Z",
+        "Previous": "",
+        "Signature": "X3Xa0gUDSA+MH8ynoKI4BWN8ipEVdT1JjZX3VL++K+//n3BfwG1JZ6lNenR/nBz5olLDt6+yS+SGLWnGyjNfCQ=="
+      },
+      {
+        "Version": "themis.postgres-replication/v1alpha1",
+        "Plan": "f85a3402f58dfc0946972bffde5ed0539352e0936c81173be35f079f2311a9dc",
+        "Session": "7d14551393b5e7018039eae4d939a4f4a84491ff04316414b80f2bf9f3f7639a",
+        "ID": 2,
+        "Payload": "a5bb4edb24a84754068d0a3c3d012c87d5686f24e26142df0b03873956797a44",
+        "XID": "762",
+        "Mode": "remote_apply",
+        "FlushLSN": "0/E52A80",
+        "AckOffsetNS": 3892738400,
+        "AckAtUTC": "2026-10-17T17:39:06.1076671Z",
+        "Previous": "89fc86873ab09327d796ae95bbbbf2167d2564d1b1912432a2d472d649dee683",
+        "Signature": "VnLnY8yu/FN04VUQhu2LcDvsy8FASHfPIFZEpgZMi8be5fAs154IdKyLxQrEbOkCXyLcLgXRlgg1NgUtECQhDg=="
+      },
+      {
+        "Version": "themis.postgres-replication/v1alpha1",
+        "Plan": "f85a3402f58dfc0946972bffde5ed0539352e0936c81173be35f079f2311a9dc",
+        "Session": "7d14551393b5e7018039eae4d939a4f4a84491ff04316414b80f2bf9f3f7639a",
+        "ID": 3,
+        "Payload": "e8b830ca3991f9dc00b922a7dbab8f4aa6b2ab76a7c4b574f765748648312cf0",
+        "XID": "763",
+        "Mode": "remote_apply",
+        "FlushLSN": "0/E52BF8",
+        "AckOffsetNS": 4067370800,
+        "AckAtUTC": "2026-10-17T17:39:06.2822995Z",
+        "Previous": "24f11b46d8e52d0b5cc2b88ccad432dc9b52adb08d787c0f0bd72ae7784ce35b",
+        "Signature": "7LW5ZmpXiwJra91CwZluyR8FOvNKdjY75w+t4nGfwHOY7V4xHdvMwekCKD8uybm4GcGA+KFP3JIrB59PLgtSCg=="
+      },
+      {
+        "Version": "themis.postgres-replication/v1alpha1",
+        "Plan": "f85a3402f58dfc0946972bffde5ed0539352e0936c81173be35f079f2311a9dc",
+        "Session": "7d14551393b5e7018039eae4d939a4f4a84491ff04316414b80f2bf9f3f7639a",
+        "ID": 4,
+        "Payload": "b64ba35e369de912d33a1ba6f5b64edb387f4fe259b603d1421102347ee4c68d",
+        "XID": "764",
+        "Mode": "remote_apply",
+        "FlushLSN": "0/E52D70",
+        "AckOffsetNS": 4234188900,
+        "AckAtUTC": "2026-10-17T17:39:06.4491176Z",
+        "Previous": "2ff39217233784461fa440cf648523667ac522a50ab9b9fd1e31967e1c7474c1",
+        "Signature": "cCDy2Vw9B1R9aMwNutvDW5NeojOkSqt+eWEahzSfsIl62cf7i0c/dZX0jUCo2aPjhy6NGvJLafxxn6oYkKXLCg=="
+      },
+      {
+        "Version": "themis.postgres-replication/v1alpha1",
+        "Plan": "f85a3402f58dfc0946972bffde5ed0539352e0936c81173be35f079f2311a9dc",
+        "Session": "7d14551393b5e7018039eae4d939a4f4a84491ff04316414b80f2bf9f3f7639a",
+        "ID": 5,
+        "Payload": "121f517790be85642c5ffba09e2ed3d44e7f275ca4b2d5226ac2b93795909652",
+        "XID": "765",
+        "Mode": "remote_apply",
+        "FlushLSN": "0/E52EE8",
+        "AckOffsetNS": 4554975200,
+        "AckAtUTC": "2026-10-17T17:39:06.7699039Z",
+        "Previous": "0b440ca2bcd1dad792869119eb75eb9e23ebe793139d1e9bd7904779de8298ab",
+        "Signature": "AI8c7L0pzyT/8vKKzurNyoE6o0PbeKcqnxi4syML5rrWzW8UJxHMhMex0a8EAa5rCmpWUChBjcbzijuX2CH/AQ=="
+      },
+      {
+        "Version": "themis.postgres-replication/v1alpha1",
+        "Plan": "f85a3402f58dfc0946972bffde5ed0539352e0936c81173be35f079f2311a9dc",
+        "Session": "7d14551393b5e7018039eae4d939a4f4a84491ff04316414b80f2bf9f3f7639a",
+        "ID": 6,
+        "Payload": "b238985e9164de1186a3aecb498d5e9f3612a2fe4451daef3c4f8c62a408c7cd",
+        "XID": "766",
+        "Mode": "remote_apply",
+        "FlushLSN": "0/E53060",
+        "AckOffsetNS": 4768505500,
+        "AckAtUTC": "2026-10-17T17:39:06.9834342Z",
+        "Previous": "d0c02562392fa7f95eb3099f9e68c3fa90cf576ef4bf3be75e1d15e15a455f97",
+        "Signature": "iUfKVp6nIp7OYOFQELGIyCz6FXWmtArcyRhtX0HxRqPgQFMJ/sGuyZ4vRUZ8Y6rpls7Ld4TRr7ulm0d9IzF7Ag=="
+      },
+      {
+        "Version": "themis.postgres-replication/v1alpha1",
+        "Plan": "f85a3402f58dfc0946972bffde5ed0539352e0936c81173be35f079f2311a9dc",
+        "Session": "7d14551393b5e7018039eae4d939a4f4a84491ff04316414b80f2bf9f3f7639a",
+        "ID": 7,
+        "Payload": "609e77999da90a44d38da72474bc8caa4cbf4cd0176f9d3d488048ca4ac7a82b",
+        "XID": "767",
+        "Mode": "remote_apply",
+        "FlushLSN": "0/E531D8",
+        "AckOffsetNS": 5083370800,
+        "AckAtUTC": "2026-10-17T17:39:07.2982995Z",
+        "Previous": "e0088c277d435fe7fe191c770fab1ee2e5822deb11f969c06d4835e3e71e2c2a",
+        "Signature": "rhjhwvW1Fus4wI1kkVbE8W08jETBFHYIROhaCnLGEvkqQPXHNuglxX/fZNgW5CX1GCRYp9Ta+rcFTlQglidkCw=="
+      },
+      {
+        "Version": "themis.postgres-replication/v1alpha1",
+        "Plan": "f85a3402f58dfc0946972bffde5ed0539352e0936c81173be35f079f2311a9dc",
+        "Session": "7d14551393b5e7018039eae4d939a4f4a84491ff04316414b80f2bf9f3f7639a",
+        "ID": 8,
+        "Payload": "4c98765d3e9f60b95f2818d46a11981dd30de436c806d556582c9e7aac08ea0f",
+        "XID": "768",
+        "Mode": "remote_apply",
+        "FlushLSN": "0/E53388",
+        "AckOffsetNS": 5291561200,
+        "AckAtUTC": "2026-10-17T17:39:07.5064899Z",
+        "Previous": "fc97a6df7229fa2f09d70bc94bc261ff2e53b8eddfc496315b472168e52d23d9",
+        "Signature": "/MTo0sO+4tb4EeXR4ft+kDUfZeiQL/H6E6y2DZceF4R4RwEj4lWoUArrrQu88EqNfRhK0N61j5CQzCkCTAXXCA=="
+      },
+      {
+        "Version": "themis.postgres-replication/v1alpha1",
+        "Plan": "f85a3402f58dfc0946972bffde5ed0539352e0936c81173be35f079f2311a9dc",
+        "Session": "7d14551393b5e7018039eae4d939a4f4a84491ff04316414b80f2bf9f3f7639a",
+        "ID": 9,
+        "Payload": "668bd25b7b72460c16c4f57c88d1d61db57a24d5ef8a3b6f436689e1f0d5047d",
+        "XID": "769",
+        "Mode": "remote_apply",
+        "FlushLSN": "0/E53500",
+        "AckOffsetNS": 5467346000,
+        "AckAtUTC": "2026-10-17T17:39:07.6822747Z",
+        "Previous": "21e664cafaac3f7501afa7f724dc2969e2ade67833e06510f1c94875ddd407f6",
+        "Signature": "Vh9IkzKnRIdp4Yaq0Df4V5rvT2eKOyAPJfXnKO/SXOvAGhn4YB+85igr+0Ann9O20SR1dkoGqylREYBM/2EGCA=="
+      },
+      {
+        "Version": "themis.postgres-replication/v1alpha1",
+        "Plan": "f85a3402f58dfc0946972bffde5ed0539352e0936c81173be35f079f2311a9dc",
+        "Session": "7d14551393b5e7018039eae4d939a4f4a84491ff04316414b80f2bf9f3f7639a",
+        "ID": 10,
+        "Payload": "1e96544e5dc154cf5c8d32fc8cd39355da430dd09828ea13afdaaa70166bd143",
+        "XID": "770",
+        "Mode": "remote_apply",
+        "FlushLSN": "0/E53678",
+        "AckOffsetNS": 5701822700,
+        "AckAtUTC": "2026-10-17T17:39:07.9167514Z",
+        "Previous": "75eb6886537103a253f3d20dd80475410b53b22a39605aa9b9e13b4bc7e59cb7",
+        "Signature": "IcuIHaYgCSqRxWKZKKEO5GDscpokLWFJnwie8KsaE109BS9EJ8+tvE/l/I/sSjIjBYeGj7I2/8AiFa/3SGlRCA=="
+      },
+      {
+        "Version": "themis.postgres-replication/v1alpha1",
+        "Plan": "f85a3402f58dfc0946972bffde5ed0539352e0936c81173be35f079f2311a9dc",
+        "Session": "7d14551393b5e7018039eae4d939a4f4a84491ff04316414b80f2bf9f3f7639a",
+        "ID": 11,
+        "Payload": "66e1958f192b8cf696627803d383221aa2a0d4bb09f0c5cd67c3bcfef02af0c1",
+        "XID": "771",
+        "Mode": "remote_apply",
+        "FlushLSN": "0/E537F0",
+        "AckOffsetNS": 5843655700,
+        "AckAtUTC": "2026-10-17T17:39:08.0585844Z",
+        "Previous": "78f891264b02d0284e9b3241b4c38f877cfc27be087074b5f8237f28328a23dc",
+        "Signature": "YO/yvCVqJG7oxkfNnZZO8jylX8roWqHddVkZUSsTuTLHyf3f6Xp+D6fp/Ch3BBIQEI5xZCLPkEdR4aVLBJLqAA=="
+      },
+      {
+        "Version": "themis.postgres-replication/v1alpha1",
+        "Plan": "f85a3402f58dfc0946972bffde5ed0539352e0936c81173be35f079f2311a9dc",
+        "Session": "7d14551393b5e7018039eae4d939a4f4a84491ff04316414b80f2bf9f3f7639a",
+        "ID": 12,
+        "Payload": "ebb02d373fe28e79bb51788768b94a4907b72aa5f1baeb5f501e972ec61da8ba",
+        "XID": "772",
+        "Mode": "remote_apply",
+        "FlushLSN": "0/E53968",
+        "AckOffsetNS": 6083537700,
+        "AckAtUTC": "2026-10-17T17:39:08.2984664Z",
+        "Previous": "38ee2178b97d8d646ff4a5a983e4769830df6848ca00ec1bccb8bf9add075fc0",
+        "Signature": "5a56NhfW4Pz/vCFpwRKEtjDWm8oRMsRDKUr5TqpfYOLg8Lr//w8u5sQaWWxjFKNd2eVKQOs5ob/0NQ9zMDEzCg=="
+      },
+      {
+        "Version": "themis.postgres-replication/v1alpha1",
+        "Plan": "f85a3402f58dfc0946972bffde5ed0539352e0936c81173be35f079f2311a9dc",
+        "Session": "7d14551393b5e7018039eae4d939a4f4a84491ff04316414b80f2bf9f3f7639a",
+        "ID": 13,
+        "Payload": "e15420f450044edf83fff51057eeae78689a7f0de5e26a7245fe2c30e53a8c91",
+        "XID": "773",
+        "Mode": "remote_apply",
+        "FlushLSN": "0/E53AE0",
+        "AckOffsetNS": 6327973900,
+        "AckAtUTC": "2026-10-17T17:39:08.5429026Z",
+        "Previous": "0db339b081f9f00fa15d9a0f1c9e87e5a63064dc12f07180e8ccd9bd87548171",
+        "Signature": "GwFEq2Ean4cMr43bJXH+l+ZorkdTeWz2H6Zpx3HEo6h+wY0XMa2mJ4Iu3R0ij3Z2g+Utex+4UHmBvnxCOcWECA=="
+      },
+      {
+        "Version": "themis.postgres-replication/v1alpha1",
+        "Plan": "f85a3402f58dfc0946972bffde5ed0539352e0936c81173be35f079f2311a9dc",
+        "Session": "7d14551393b5e7018039eae4d939a4f4a84491ff04316414b80f2bf9f3f7639a",
+        "ID": 14,
+        "Payload": "b75f782d5395d6817a655ebb4f4d8883860aa22830f5817934e4ef98c15e380d",
+        "XID": "774",
+        "Mode": "remote_apply",
+        "FlushLSN": "0/E53C58",
+        "AckOffsetNS": 6583029600,
+        "AckAtUTC": "2026-10-17T17:39:08.7979583Z",
+        "Previous": "57731d4222c9567e1b5b4cc1440d4d810e20ce83144845921813426a6544a741",
+        "Signature": "k4xwePODiiHrUmkl7ZJlEvZYb4XMJ20ArqRspegpMMNp9BSbNsqbYg6RijkM+ZFlO1OfWhGQ2ec98UA8CjYXBQ=="
+      },
+      {
+        "Version": "themis.postgres-replication/v1alpha1",
+        "Plan": "f85a3402f58dfc0946972bffde5ed0539352e0936c81173be35f079f2311a9dc",
+        "Session": "7d14551393b5e7018039eae4d939a4f4a84491ff04316414b80f2bf9f3f7639a",
+        "ID": 15,
+        "Payload": "ae85e5007df97b9211d6af52b1db6eea3142f1bdf0ff69405df89e1fcec7b5f7",
+        "XID": "775",
+        "Mode": "remote_apply",
+        "FlushLSN": "0/E53DD0",
+        "AckOffsetNS": 6732120900,
+        "AckAtUTC": "2026-10-17T17:39:08.9470496Z",
+        "Previous": "ee2c5839eb1e6e86055ac5d441e5e0e4d21b68236a06d5a8ec7c1a1831ea30fe",
+        "Signature": "xsQE2foHPi5P8awPhqbe3C/Bv0UaXZkV57N2x43qob1dmPPrGxQBCUIdVloTDnpoeYeZPC5uQmpKgrk9o5cfBg=="
+      },
+      {
+        "Version": "themis.postgres-replication/v1alpha1",
+        "Plan": "f85a3402f58dfc0946972bffde5ed0539352e0936c81173be35f079f2311a9dc",
+        "Session": "7d14551393b5e7018039eae4d939a4f4a84491ff04316414b80f2bf9f3f7639a",
+        "ID": 16,
+        "Payload": "e0aaf2836957b635c1bf9de9f7da1901540e6be0f68d78fbdabe87a93e136289",
+        "XID": "776",
+        "Mode": "remote_apply",
+        "FlushLSN": "0/E53F48",
+        "AckOffsetNS": 6917172000,
+        "AckAtUTC": "2026-10-17T17:39:09.1321007Z",
+        "Previous": "ea115d0754fde0729239630197666aacabc816e8b5641403d1415b996b816573",
+        "Signature": "3m8A/9GqNYS/EQbZWpRj5o1lKQW5ZJrZRlaHqgFiijPSzn/1JDdiinq9sZiGkxN2Nt078dHVHB6Ffe8nc6caDw=="
+      },
+      {
+        "Version": "themis.postgres-replication/v1alpha1",
+        "Plan": "f85a3402f58dfc0946972bffde5ed0539352e0936c81173be35f079f2311a9dc",
+        "Session": "7d14551393b5e7018039eae4d939a4f4a84491ff04316414b80f2bf9f3f7639a",
+        "ID": 17,
+        "Payload": "a848f4db2e3cb4f968f5b3c9186119fff14b6ac1b013d43c174dd43ca6edfb1c",
+        "XID": "777",
+        "Mode": "remote_apply",
+        "FlushLSN": "0/E540D8",
+        "AckOffsetNS": 7173847000,
+        "AckAtUTC": "2026-10-17T17:39:09.3887757Z",
+        "Previous": "58a2c847cf142a428d59c37e4cb8a3a0537346247837b9fd7264c0e47f43e951",
+        "Signature": "vwkcnjqbPU0sMpih7/g+DgBWMBG6lFlimynnnD28bwZCQ0L0tlSmeP7u2AebYc8LV2vkeuuG3MnXpL8SHGMKDA=="
+      },
+      {
+        "Version": "themis.postgres-replication/v1alpha1",
+        "Plan": "f85a3402f58dfc0946972bffde5ed0539352e0936c81173be35f079f2311a9dc",
+        "Session": "7d14551393b5e7018039eae4d939a4f4a84491ff04316414b80f2bf9f3f7639a",
+        "ID": 18,
+        "Payload": "30c5b60c1ecf26b215663faa47fc8ca7c5acc84f8d6acd505add74a24feab15d",
+        "XID": "778",
+        "Mode": "remote_apply",
+        "FlushLSN": "0/E54250",
+        "AckOffsetNS": 7354934700,
+        "AckAtUTC": "2026-10-17T17:39:09.5698634Z",
+        "Previous": "8310cc87f79eea498cb97f583b5a9d25e1f8384dc3238022e3270b0f057bbfbf",
+        "Signature": "8ZELnw+XAVWEY7Yxf+26a57sRnZR7EYQ3YHM0MU3hG1XtEi/+ZfJzv7g65G9VsFPEIYUr6vE71XmmuilbsbNDA=="
+      },
+      {
+        "Version": "themis.postgres-replication/v1alpha1",
+        "Plan": "f85a3402f58dfc0946972bffde5ed0539352e0936c81173be35f079f2311a9dc",
+        "Session": "7d14551393b5e7018039eae4d939a4f4a84491ff04316414b80f2bf9f3f7639a",
+        "ID": 19,
+        "Payload": "6ea0b0120a85a137d4b79206e2d80dd63e92e45213b9731e040d6649e3bd31e7",
+        "XID": "779",
+        "Mode": "remote_apply",
+        "FlushLSN": "0/E543C8",
+        "AckOffsetNS": 7594259000,
+        "AckAtUTC": "2026-10-17T17:39:09.8091877Z",
+        "Previous": "ad77e2dec7c74ff99fedae75dbd4856dcff16fe1b0e373474576d306b01bba55",
+        "Signature": "dzzyFyOukwXUY+/GrPgZJMIsJnblOhkJiaiakcugX3GC15HeyKfXdOzKRUaEyRXAOTvl9YHBpRWJbKs7M2plAw=="
+      },
+      {
+        "Version": "themis.postgres-replication/v1alpha1",
+        "Plan": "f85a3402f58dfc0946972bffde5ed0539352e0936c81173be35f079f2311a9dc",
+        "Session": "7d14551393b5e7018039eae4d939a4f4a84491ff04316414b80f2bf9f3f7639a",
+        "ID": 20,
+        "Payload": "4644d937331aa3796822c4f5c7dbefeec63bcb3043f3614c443426b47d3e4baa",
+        "XID": "780",
+        "Mode": "remote_apply",
+        "FlushLSN": "0/E54540",
+        "AckOffsetNS": 7726323800,
+        "AckAtUTC": "2026-10-17T17:39:09.9412525Z",
+        "Previous": "b40708790bcb14a2a870ad6e7e46487e31a87a652567088b7c8d000131a15d48",
+        "Signature": "3OwhrRHAIs2FZl6kuZVnxyCPITSzO/8gFtqS4Sv1Pz1kaFUx8Pb1K0QNenIa1a6UkGwGja6YrwZcIV2Ol4QJAw=="
+      }
+    ],
+    "ReceiptCoverage": true,
+    "DataLossExact": true,
+    "SchemaObserved": true,
+    "SchemaMatch": true,
+    "IntegrityObserved": true,
+    "IntegrityOK": true,
+    "ReadWriteReady": true,
+    "Missing": null,
+    "Unexpected": null,
+    "Duplicates": null,
+    "Corrupt": null,
+    "Uncertain": null,
+    "RecoveryPoint": 20,
+    "AcknowledgedLossGapNS": null
+  },
+  "assertions": [
+    {
+      "id": "authorization",
+      "verdict": "PASS",
+      "evidence": "SUFFICIENT"
+    },
+    {
+      "id": "replication",
+      "verdict": "PASS",
+      "evidence": "SUFFICIENT"
+    },
+    {
+      "id": "fencing",
+      "verdict": "PASS",
+      "evidence": "SUFFICIENT"
+    },
+    {
+      "id": "promotion",
+      "verdict": "PASS",
+      "evidence": "SUFFICIENT"
+    },
+    {
+      "id": "readiness",
+      "verdict": "PASS",
+      "evidence": "SUFFICIENT"
+    },
+    {
+      "id": "receipts",
+      "verdict": "PASS",
+      "evidence": "SUFFICIENT"
+    },
+    {
+      "id": "schema",
+      "verdict": "PASS",
+      "evidence": "SUFFICIENT"
+    },
+    {
+      "id": "integrity",
+      "verdict": "PASS",
+      "evidence": "SUFFICIENT"
+    },
+    {
+      "id": "acknowledged-loss",
+      "verdict": "PASS",
+      "evidence": "SUFFICIENT"
+    },
+    {
+      "id": "failover-time",
+      "verdict": "FAIL",
+      "evidence": "SUFFICIENT"
+    },
+    {
+      "id": "cleanup",
+      "verdict": "PASS",
+      "evidence": "SUFFICIENT"
+    },
+    {
+      "id": "unambiguous",
+      "verdict": "PASS",
+      "evidence": "SUFFICIENT"
+    }
+  ],
+  "cleanup": {
+    "version": "themis.postgres-replication/v1alpha1",
+    "run": "8bf1fa4fa185ac3616b8e13bb680e0aabbf1e0c48e8aacac4bcedf8ffe314da6",
+    "at": "2026-10-17T17:39:28.0562833Z",
+    "complete": true,
+    "actions": [
+      "removed-volume:themis-pgr-8bf1fa4fa185ac3616b8e13bb680e0aabbf1e0c48e8aacac4bcedf8ffe314da6-primary",
+      "removed-container:64f32d6b0aa58d24ca8fccc1aca860a993730ae4b18767a94607a7a09c6bcb97",
+      "removed-volume:themis-pgr-8bf1fa4fa185ac3616b8e13bb680e0aabbf1e0c48e8aacac4bcedf8ffe314da6-standby",
+      "removed-network:bed0fd45009aa04df13f88a51bf3abc2a68e1b7f31db0033cbce66f152a0c814",
+      "private-control-state-retention:operator-managed"
+    ]
+  }
+}

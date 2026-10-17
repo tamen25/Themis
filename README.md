@@ -1,5 +1,13 @@
 # Themis
 
+T4.0 adds [signed evidence bundles and independent offline verification](docs/evidence-bundles.md).
+Build `go build -o bin/ ./cmd/themis-evidence`. Explicit publication uses a
+separate protected signer; verification requires an external publisher trust
+policy. Artifact integrity, publisher authenticity, source consistency and
+unproven execution are reported separately. Retrospective signing preserves
+original FAIL, INCONCLUSIVE and cleanup uncertainty and cannot establish a trusted
+execution PASS. Existing experiment commands remain independently functional.
+
 `themis-postgres` supports owned disposable local PostgreSQL recovery experiments:
 [logical restore](docs/postgres-recovery.md), [durable logical recovery after
 SIGKILL](docs/postgres-durable-recovery.md), and [physical backup/WAL/PITR](docs/postgres-pitr.md).

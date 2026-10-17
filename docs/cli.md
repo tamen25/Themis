@@ -1,5 +1,11 @@
 # CLI reference
 
+`themis-evidence` is the separate publication/offline verifier binary. Its
+commands, stable JSON, external trust policy and exit codes are specified in
+[signed evidence bundles](evidence-bundles.md). Verification authenticates artifact
+and publisher claims; source candidate outcomes and unproven execution remain
+separate. Existing execution-command semantics below are unchanged.
+
 `themis-postgres replication` provides `setup`, `plan`, `approve-prepare`, `prepare`,
 `approve-termination`, `approve-promotion`, `run`, `reconcile` and `replay` for one
 newly owned local physical streaming pair. Termination and promotion require

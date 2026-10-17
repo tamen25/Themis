@@ -1,5 +1,20 @@
 # Architecture
 
+## Retrospective evidence publication (T4.0)
+
+`pkg/evidence` is a standalone standard-library archive/signature/trust package.
+Its result keeps integrity, publisher trust and unproven execution distinct.
+`pkg/evidenceverify` adds `internal/evidencesource`'s two concrete historical
+mappings, reusing pure existing predicates through in-memory APIs. The full
+checker imports existing engine packages for their types/evaluators, so it has
+their compile-time dependencies; it creates no infrastructure clients or calls.
+Execution engines do not depend on either public evidence package.
+
+`cmd/themis-evidence` exposes explicit protected key generation, allowlisted public
+export, signing and offline verification. Original private PostgreSQL ownership
+is represented by a public projection and opaque references, not exported state.
+See [protocol, limits and commands](evidence-bundles.md) and ADRs T074–T078.
+
 ## T0 observation path
 
 Themis is a single executable with small domain packages. The CLI is the adapter

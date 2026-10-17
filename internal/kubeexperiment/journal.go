@@ -2,6 +2,7 @@ package kubeexperiment
 
 import (
 	"bufio"
+	"bytes"
 	"encoding/json"
 	"errors"
 	"io"
@@ -119,8 +120,23 @@ func ReadJournal(path string) ([]Event, error) {
 	if !info.Mode().IsRegular() || info.Size() > 16<<20 {
 		return nil, errors.New("invalid or oversized journal file")
 	}
-	limited := io.LimitReader(f, (16<<20)+1)
-	scanner := bufio.NewScanner(limited)
+	data, err := io.ReadAll(io.LimitReader(f, (16<<20)+1))
+	if err != nil {
+		return nil, err
+	}
+	return ReadJournalBytes(data)
+}
+
+// ReadJournalBytes performs the same bounded historical parsing without opening
+// any filesystem path or connecting to a cluster. T4 source checks use it.
+func ReadJournalBytes(data []byte) ([]Event, error) {
+	if len(data) == 0 || len(data) > 16<<20 {
+		return nil, errors.New("invalid or oversized journal file")
+	}
+	if data[len(data)-1] != '\n' {
+		return nil, errors.New("torn experiment journal")
+	}
+	scanner := bufio.NewScanner(bytes.NewReader(data))
 	scanner.Buffer(make([]byte, 4096), 65537)
 	events := []Event{}
 	bytes := 0
@@ -170,18 +186,6 @@ func ReadJournal(path string) ([]Event, error) {
 	}
 	if len(events) == 0 {
 		return nil, errors.New("empty experiment journal")
-	}
-	// Scanner accepts a final non-newline record; an append journal does not.
-	info, err = f.Stat()
-	if err != nil {
-		return nil, err
-	}
-	last := []byte{0}
-	if info.Size() == 0 {
-		return nil, errors.New("empty experiment journal")
-	}
-	if _, err = f.ReadAt(last, info.Size()-1); err != nil || last[0] != '\n' {
-		return nil, errors.New("torn experiment journal")
 	}
 	return events, nil
 }

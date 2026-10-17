@@ -4,7 +4,7 @@ ifeq ($(OS),Windows_NT)
 GOBIN := bin/themis.exe
 endif
 
-.PHONY: build controller kube-runner chaosmesh-planner postgres-runner fmt fmt-check vet test race fuzz check
+.PHONY: build controller kube-runner chaosmesh-planner postgres-runner evidence fmt fmt-check vet test race fuzz check
 
 build:
 	$(GO) build -trimpath -o $(GOBIN) ./cmd/themis
@@ -21,12 +21,15 @@ chaosmesh-planner:
 postgres-runner:
 	$(GO) build -trimpath -o bin/ ./cmd/themis-postgres
 
+evidence:
+	$(GO) build -trimpath -o bin/ ./cmd/themis-evidence
+
 fmt:
 	$(GO) fmt ./...
 
 # gofmt emits nothing on success. This target requires a POSIX shell.
 fmt-check:
-	@files="$$(gofmt -l cmd internal api examples test)" || exit 1; test -z "$$files" || (printf '%s\n' "$$files"; exit 1)
+	@files="$$(gofmt -l cmd internal pkg api examples test)" || exit 1; test -z "$$files" || (printf '%s\n' "$$files"; exit 1)
 
 vet:
 	$(GO) vet ./...
@@ -50,5 +53,8 @@ fuzz:
 	$(GO) test ./internal/postgres -run '^$$' -fuzz '^FuzzDurableContract$$' -fuzztime 10s
 	$(GO) test ./internal/postgres -run '^$$' -fuzz '^FuzzPITRUntrustedRecoveryData$$' -fuzztime 10s
 	$(GO) test ./internal/postgres -run '^$$' -fuzz '^FuzzReplicationUntrustedEvidence$$' -fuzztime 10s
+	$(GO) test ./pkg/evidence -run '^$$' -fuzz '^FuzzManifest$$' -fuzztime 10s
+	$(GO) test ./pkg/evidence -run '^$$' -fuzz '^FuzzArchive$$' -fuzztime 10s
+	$(GO) test ./pkg/evidence -run '^$$' -fuzz '^FuzzSignature$$' -fuzztime 10s
 
-check: fmt-check vet test build controller kube-runner
+check: fmt-check vet test build controller kube-runner evidence

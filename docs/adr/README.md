@@ -73,3 +73,8 @@ requirements in a record do not imply an existing execution component.
 | [T071](T071-streaming-failover-safety.md) | Owned physical streaming pair and separate fencing/promotion authority |
 | [T072](T072-replication-acknowledgement.md) | Effective remote_apply semantics and independent COMMIT/replica evidence |
 | [T073](T073-failover-clock-and-recovery.md) | Conservative time interval, one-use failover and historical cleanup |
+| [T074](T074-evidence-trust-boundaries.md) | Separate artifact integrity, publisher identity and execution truth |
+| [T075](T075-evidence-wire-format.md) | Deterministic manifest, detached signature and bounded canonical archive |
+| [T076](T076-public-source-mappings.md) | Two concrete pure source mappings and public PostgreSQL projection |
+| [T077](T077-explicit-evidence-publication.md) | Protected explicit signing, snapshot checks and exclusive publication |
+| [T078](T078-offline-verification-api.md) | Independent offline APIs without infrastructure execution authority |
