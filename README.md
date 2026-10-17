@@ -1,10 +1,11 @@
 # Themis
 
-Experimental T3.0 adds a separate `themis-postgres` CLI for owned disposable
-local PostgreSQL logical backup/restore experiments with independent COMMIT
-receipts, measured readiness, conservative verdicts and exact-resource cleanup.
-See the [PostgreSQL recovery guide](docs/postgres-recovery.md). Chaos Mesh
-remains planning-only with its existing execution blockers.
+`themis-postgres` supports owned disposable local PostgreSQL recovery experiments:
+[logical restore](docs/postgres-recovery.md), [durable logical recovery after
+SIGKILL](docs/postgres-durable-recovery.md), and [physical backup/WAL/PITR](docs/postgres-pitr.md).
+They retain separate contracts and fault authority, signed COMMIT receipts,
+measured application recovery, conservative verdicts and exact-resource cleanup.
+Chaos Mesh remains planning-only with its existing execution blockers.
 
 Themis is an early Go reliability verification project. Its T0 CLI validates
 contracts, creates immutable plans, runs bounded local HTTP checks, and exports
@@ -284,3 +285,11 @@ separate SIGKILL approval, independently observed failure, and acknowledged data
 loss/recovery measurements. Use `themis-postgres durable ...`; existing T3.0
 commands remain unchanged. This is an owned local synthetic logical-recovery
 experiment; whole-run signing, physical recovery, WAL/PITR and failover are deferred.
+
+T3.2 adds a separate [physical PostgreSQL PITR workflow](docs/postgres-pitr.md):
+manifest-verified base backup, independently retained WAL, an exact named target
+created after backup completion, separate SIGKILL approval, paused target/data
+inspection, observed promotion, and independent cleanup. `themis-postgres pitr`
+keeps target fidelity separate from all acknowledged data loss. This remains a
+disposable local synthetic experiment; failover and whole-run attestation remain
+outside its scope.

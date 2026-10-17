@@ -231,3 +231,16 @@ and compares reloaded receipts. Independent cleanup ignores execution journals
 as authority and preserves historical bytes. See
 [durable recovery](postgres-durable-recovery.md) and ADRs T063–T066 for storage,
 clock and provenance limits and deferred physical/WAL/failover methods.
+
+## Physical PostgreSQL PITR (T3.2)
+
+`internal/postgres/pitr_*` implements one concrete physical workflow. It shares
+the bounded Docker command, protected local files/locks, journal writer, OS file
+identity and pure verdict aggregation. New contracts, plans, approval domains,
+receipt domains and execution reports preserve logical workflow compatibility.
+Preparation publishes a verified independent physical base and contiguous WAL
+capsule; a second approval binds its actual digest and exact target. Execution
+observes SIGKILL, independently rechecks retained bytes, proves a paused target
+and exact data, then observes promotion and committed readiness. Separate
+inventory-based cleanup preserves history. See [protocol](postgres-pitr.md) and
+ADRs T067–T070. No provider registry, scheduler or Kubernetes permission changes.

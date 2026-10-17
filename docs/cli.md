@@ -92,3 +92,15 @@ Exit codes: 0 PASS, 3 FAIL, 4 INCONCLUSIVE, 7 CLEANUP_PENDING, 2 request/admissi
 error. Offline replay always exits 4 on valid historical evidence. See the
 [complete two-approval workflow and storage/timing limits](postgres-durable-recovery.md).
 Existing T3.0 commands keep their original namespace, flags and wire formats.
+
+## Physical PostgreSQL PITR
+
+`themis-postgres pitr setup|plan|approve-prepare|prepare|approve-failure|run|reconcile|replay`
+uses a new version and the original private `--state`. Setup additionally needs
+the explicit `--endpoint` and original `--engine-id`. Plan reads `--contract`.
+Preparation approval takes its reviewed plan `--expect-digest`; failure approval
+takes the **final prepared execution digest**, which includes actual base/WAL
+identities, receipts and named target. Neither approval prints its private grant.
+Exit codes remain 0 PASS, 3 FAIL, 4 INCONCLUSIVE, 7 CLEANUP_PENDING, 2 request or
+admission error. Offline replay always exits 4. See [commands and measured
+recovery protocol](postgres-pitr.md) before approving source SIGKILL.

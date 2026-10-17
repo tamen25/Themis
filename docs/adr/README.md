@@ -66,3 +66,7 @@ requirements in a record do not imply an existing execution component.
 | [T064](T064-unclean-source-authority.md) | Two approvals, exact-source SIGKILL and independent cleanup capability |
 | [T065](T065-recovery-clock-and-receipts.md) | Conservative failure interval and process-scoped COMMIT clocks |
 | [T066](T066-durable-recovery-evidence.md) | Real recovery, interruption uncertainty and unchanged offline trust limit |
+| [T067](T067-physical-pitr-authority.md) | Separate physical PITR plan and prepared-artifact authority |
+| [T068](T068-physical-backup-wal.md) | Manifest-verified physical backup and independently retained WAL |
+| [T069](T069-pitr-target-and-loss.md) | Exact recovery target, physical identity and acknowledged loss |
+| [T070](T070-pitr-interruption-cleanup.md) | One-use interruption semantics and independent original-resource cleanup |

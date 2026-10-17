@@ -197,3 +197,15 @@ runner death and journal corruption, and never adopts resources from reports.
 The persistent local driver has measured storage guards and a per-file hard
 limit, not a filesystem-wide quota. No power-loss durability or untrusted Docker
 administrator isolation is claimed. Offline replay cannot create trusted PASS.
+
+T3.2's [physical backup/WAL/PITR boundary](docs/postgres-pitr.md) has a separate
+contract and fault authority over actual base/WAL/receipt/target metadata.
+Physical recovery preserves the source system identifier; exact original
+container, volume and boot identities establish destination independence.
+Fixed bounded archive/restore commands admit no user shell, paths or SQL.
+Target pause/LSN, application state and promotion are separate observed gates.
+All acknowledged post-target commits still count toward loss. Raw physical
+backups and WAL include authentication data and remain private, along with
+credentials and capabilities. Public hashes, receipts and sanitized logs are
+not whole-run execution attestation. Cleanup survives damaged history but
+requires the sealed original inventory and separate unexpired capability.

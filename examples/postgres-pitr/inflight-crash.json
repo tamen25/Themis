@@ -1,0 +1,1 @@
+{"version":"themis.postgres-pitr/v1alpha1","name":"physical-pitr","workflow":"physical-named-target-sigkill-v1","scenario":"inflight-crash","maxRecoveryMillis":60000,"maxLostCommits":0,"maxBackupBytes":67108864,"maxWalBytes":33554432}
