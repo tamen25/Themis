@@ -1,0 +1,33 @@
+{
+  "version": "themis.native-observation-trust/v1alpha1",
+  "keys": [
+    {
+      "witness": "native-t43-witness",
+      "keyId": "bee135b62fdd3a9c3843adca5f3120c03c7132cca881e62ce7ef4ff0fefeb12d",
+      "publicKey": "oudZB6/hwpwnGPJ8f/+ZCpfVmYA3WWO8Kn/CXBYlQCU=",
+      "algorithm": "Ed25519",
+      "engine": "native-dependency-witness",
+      "publisher": "native-t43-publisher",
+      "publisherKeyId": "53e0bf55568dbccb822bc0bb95e82429d9bd6dc7e289b1b76db87fdfc504260a",
+      "scopes": [
+        {
+          "run": "b12e873e1f6220e37d24a6819b5b3daa578e4b8684eb3724464bd08755816f56",
+          "planDigest": "sha256:6b6c37c3670215bb8676c4978214def7e90b8f352e6ee95acf74c33949c45940",
+          "invocation": "87a1695f1c36607437bfffc2d6bf453077794a3796550d360a1c3d8541e76c87",
+          "session": "b4f9f67bad7b645815d4f87f24ca9e03b693b041ff61b09e8f163e5daa8293e2",
+          "registrationDigest": "sha256:fd75edeab09bb4692c70bf5dac2aea9c19fc236169bda5feceef30d4d97025e3",
+          "targetDigest": "sha256:d37685c6cd4a7d7c313bc35c99537ebef39259366506f99a891639d40eb7dffa",
+          "routes": [
+            "application:/value",
+            "dependency:/value",
+            "proxy:/receipt/{invocation}",
+            "proxy:/value"
+          ]
+        }
+      ],
+      "notBefore": "2026-10-18T14:13:14.2399432Z",
+      "notAfter": "2026-10-19T15:13:14.2399432Z",
+      "revoked": false
+    }
+  ]
+}

@@ -5,7 +5,8 @@ a real application calls a fixed proxy and separate synthetic dependency. The
 proxy enforces exact boot/target approval, once-only application and independent
 monotonic expiry. Separate actual probing establishes effect, application outcome
 and recovery; cleanup uncertainty remains visible. Scope is disposable owned Kind.
-Signed witness/bundle integration is deferred to T4.3; Chaos Mesh remains disabled.
+T4.3 adds a [separate signed native workflow](docs/native-witness.md);
+the original T4.2 collection remains unsigned. Chaos Mesh remains disabled.
 See the [tracked roadmap](docs/roadmap.md).
 
 T4.1 adds [independently signed live application observations](docs/live-observation.md)
@@ -324,3 +325,11 @@ primary fencing, timeline/write-readiness checks and exact acknowledged loss.
 Time objectives use conservative uncertainty bounds. Cleanup survives runner death
 without rewriting history. This remains a disposable local synthetic experiment;
 automated HA, existing databases and whole-run attestation are excluded.
+## Native signed evidence (T4.3)
+
+The [native witness workflow](docs/native-witness.md) adds a dedicated read-only
+process signing its own real dependency/application measurements, exact approval
+and actuator correlation, explicit external trust and one offline evidence mapping.
+Source candidate, witness corroboration and cleanup remain separate; whole trusted
+execution remains INCONCLUSIVE. Scope is newly owned disposable synthetic Kind.
+See the [reviewed roadmap](docs/roadmap.md) for T4.4 and the Stage 5 audit sequence.

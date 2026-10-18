@@ -23,6 +23,7 @@ import (
 	"github.com/tamen25/themis/pkg/evidence"
 	"github.com/tamen25/themis/pkg/evidenceverify"
 	obs "github.com/tamen25/themis/pkg/liveobservation"
+	native "github.com/tamen25/themis/pkg/nativeobservation"
 )
 
 type keyRecord struct {
@@ -48,7 +49,7 @@ func run(args []string, output io.Writer, now time.Time) int {
 	}
 	f := flag.NewFlagSet(args[0], flag.ContinueOnError)
 	f.SetOutput(io.Discard)
-	var engine, source, state, out, keyDir, publisher, bundle, trust, proposal, recordPath, journalPath, witnessSession, witnessTrust string
+	var engine, source, state, out, keyDir, publisher, bundle, trust, proposal, recordPath, journalPath, witnessSession, witnessTrust, reconciliation string
 	switch args[0] {
 	case "keygen":
 		f.StringVar(&keyDir, "key-dir", "", "new protected signer directory")
@@ -61,6 +62,7 @@ func run(args []string, output io.Writer, now time.Time) int {
 		f.StringVar(&recordPath, "record", "", "public T2.3 coordination record instead of private run directory")
 		f.StringVar(&journalPath, "journal", "", "explicit matching historical journal for record export")
 		f.StringVar(&witnessSession, "witness-session", "", "explicit observation session for the new witness mapping")
+		f.StringVar(&reconciliation, "reconciliation", "", "explicit subsequent public native cleanup receipt")
 	case "bundle":
 		f.StringVar(&engine, "engine", "", "source mapping")
 		f.StringVar(&source, "source", "", "curated public export directory")
@@ -110,7 +112,12 @@ func run(args []string, output io.Writer, now time.Time) int {
 		}
 		var files map[string][]byte
 		var err error
-		if recordPath != "" {
+		if engine == native.Engine {
+			if witnessSession == "" || recordPath != "" {
+				return fail("USAGE", "native source requires explicit run and witness session", 2)
+			}
+			files, err = exportNative(state, witnessSession, reconciliation)
+		} else if recordPath != "" {
 			files, err = exportCoordination(recordPath, journalPath)
 		} else {
 			files, err = exportRun(engine, state, proposal)
@@ -221,6 +228,19 @@ func run(args []string, output io.Writer, now time.Time) int {
 				Error        failure         `json:"error"`
 			}{o.Result, failure{evidence.ResultVersion, "INTEGRITY_OR_SIGNATURE", err.Error()}})
 			return 4
+		}
+		if o.Manifest.Source.Engine == native.Engine {
+			finding, err := nativeFinding(o, witnessTrust, now)
+			if err != nil {
+				return fail("WITNESS_TRUST", "invalid or unavailable native external witness policy", 5)
+			}
+			if !emit(evidenceverify.NativeObservedResult{Version: "themis.native-witness-bundle-verification/v1alpha1", Evidence: o.Result, NativeObservationCorroboration: finding}) {
+				return 3
+			}
+			if args[0] == "inspect" {
+				return 0
+			}
+			return nativeExit(o, finding)
 		}
 		var observation *obs.Finding
 		if o.Manifest.Source.Engine == obs.Engine {

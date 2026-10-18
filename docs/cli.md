@@ -1,5 +1,8 @@
 # CLI reference
 
+For T4.3's integrated native approval, signed witness and offline evidence commands,
+see [native witness operation](native-witness.md). Old command outputs stay separate.
+
 The separate `themis-dependency` binary provides `init`, `bind`, `plan`, `approve`,
 `observe`, `run`, `inspect`, `cancel`, `reconcile` and offline `replay` for one newly
 owned native HTTP dependency path. Approval of the exact plan and an autonomous
@@ -129,3 +132,13 @@ identities, receipts and named target. Neither approval prints its private grant
 Exit codes remain 0 PASS, 3 FAIL, 4 INCONCLUSIVE, 7 CLEANUP_PENDING, 2 request or
 admission error. Offline replay always exits 4. See [commands and measured
 recovery protocol](postgres-pitr.md) before approving source SIGKILL.
+## Native signed-witness integration
+
+Use `themis-dependency approve-witnessed` and `run-witnessed` only with the exact
+reviewed native digest, a separately running original observer and a registered,
+ready signed witness. `themis-native-witness keygen/register/observe/inspect` has
+no fault mutation command. Its state is the dedicated installer-created witness
+principal. `themis-evidence export/bundle/verify` supports the explicit
+`native-dependency-witness` mapping and separately supplied `--witness-policy`.
+Verification 0 can corroborate a source FAIL; whole execution stays INCONCLUSIVE.
+See [complete commands, exits and trust requirements](native-witness.md).

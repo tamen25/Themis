@@ -3,6 +3,7 @@ package dependencyexperiment
 import (
 	"bytes"
 	"context"
+	"encoding/hex"
 	"errors"
 	"io"
 	"net/http"
@@ -69,7 +70,16 @@ func Post(ctx context.Context, conn *Connection, route string, v any, nonce stri
 	return r, nil
 }
 func Control(ctx context.Context, conn *Connection, a wire.Authorization, action string) (wire.Reply, error) {
+	return controlNonce(ctx, conn, a, action, "")
+}
+
+func controlNonce(ctx context.Context, conn *Connection, a wire.Authorization, action, nonce string) (wire.Reply, error) {
 	cmd := wire.NewCommand(action, a, time.Now())
+	if nonce != "" {
+		cmd.Nonce = nonce
+		cmd.Signature = ""
+		cmd.Signature = wire.Sign(wire.CommandVersion, cmd, a.ApplyPrivate)
+	}
 	r, e := Post(ctx, conn, "/control", cmd, cmd.Nonce, a.Grant.Plan.Binding.Target.Proxy.Process)
 	if e == nil && (r.PlanDigest != a.Grant.Digest || r.Action != action || r.State.Invocation != a.Grant.Invocation || r.State.ApplyCount > 1 || r.State.ApplyCount < 0 || r.State.DeadlineNS-r.State.StartedNS > int64(time.Duration(a.Grant.Plan.LifetimeMS)*time.Millisecond)) {
 		e = wire.ErrDenied
@@ -102,7 +112,20 @@ func stopped(dir string) bool {
 	return !errors.Is(e, os.ErrNotExist)
 }
 func Run(ctx context.Context, state, dir, observations string) (Report, error) {
+	return RunWithReadiness(ctx, state, dir, observations, "")
+}
+
+// RunWithReadiness keeps the original engine and authority unchanged. The new
+// integration supplies a public signed-readiness commitment as its Apply nonce;
+// the actuator authenticates and echoes that nonce under its existing protocol.
+func RunWithReadiness(ctx context.Context, state, dir, observations, applyNonce string) (Report, error) {
 	report := Report{Version: "themis.native-http-report/v1alpha1", Execution: "DENIED", Cleanup: "UNKNOWN", Verdict: "INCONCLUSIVE", Events: []Event{}, ExecutionAttestation: "NOT_INDEPENDENTLY_ATTESTED", TrustedExecutionVerdict: "INCONCLUSIVE"}
+	if applyNonce != "" {
+		decoded, err := hex.DecodeString(applyNonce)
+		if err != nil || len(decoded) != 32 || hex.EncodeToString(decoded) != applyNonce {
+			return report, wire.ErrDenied
+		}
+	}
 	a, e := readAuthorization(dir)
 	if e != nil || !a.Grant.Valid(time.Now(), true) {
 		return report, wire.ErrDenied
@@ -196,7 +219,7 @@ func Run(ctx context.Context, state, dir, observations string) (Report, error) {
 		_ = g.Close()
 		return report, e
 	}
-	applied, applyError := Control(ctx, conn, a, "apply")
+	applied, applyError := controlNonce(ctx, conn, a, "apply", applyNonce)
 	kind := "APPLIED"
 	if applyError != nil {
 		kind = "APPLY_UNCERTAIN"

@@ -1,5 +1,9 @@
 # Native HTTP dependency experiment (T4.2)
 
+This guide describes the original T4.2 formats and unsigned observer. The distinct
+[T4.3 signed native workflow](native-witness.md) adds new registration, public
+approval correlation and offline mapping while preserving these commands.
+
 Themis owns the provider-safety contract and a small native L7 fault mechanism.
 It does not fork Chaos Mesh or implement a general privileged chaos engine.
 This experiment supports only newly installed disposable synthetic Kind workloads.

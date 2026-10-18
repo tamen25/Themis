@@ -1,5 +1,18 @@
 # Security policy
 
+T4.3's [native witness integration](docs/native-witness.md) signs newly measured
+client observations under a separate read-only principal/key. Public approval
+commitments, signed readiness, proxy Apply nonce and a distinct read-only signed
+actuator receipt correlate the exact original grant, plan, invocation and boot.
+The witness never receives operational grants or cleanup authority. Publisher and
+witness roots must be independently supplied and exactly scoped; embedded keys
+and a valid publisher signature cannot establish experiment truth. Original
+cancellation and cleanup uncertainty are preserved, including after independent
+recovery observations and later reconciliation. Whole execution remains
+NOT_INDEPENDENTLY_ATTESTED / INCONCLUSIVE. Same host/admin and trusted installer,
+clock, image and infrastructure assumptions remain explicit. Old fault authority,
+expiry, controller permissions and historical formats are unchanged.
+
 T4.2's [native dependency adapter](docs/native-dependency.md) supports only a fresh
 owned Kind application/proxy/dependency path. A signed installer binding, explicit
 exact-plan approval and the actuator's own Pod/boot/key check gate one fixed delay.

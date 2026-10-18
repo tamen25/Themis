@@ -17,12 +17,16 @@ import (
 	"github.com/tamen25/themis/internal/result"
 	"github.com/tamen25/themis/pkg/evidence"
 	obs "github.com/tamen25/themis/pkg/liveobservation"
+	native "github.com/tamen25/themis/pkg/nativeobservation"
 )
 
 const Postgres = "postgres-replication"
 const Kubernetes = "kubernetes-synthetic"
 
 func Inventory(engine string) []evidence.Artifact {
+	if engine == native.Engine {
+		return nativeInventory()
+	}
 	if engine == obs.Engine {
 		return append(Inventory(Kubernetes), evidence.Artifact{Path: "artifacts/witness-journal.json", Role: "witness-observations", Version: obs.Version}, evidence.Artifact{Path: "artifacts/witness-registration.json", Role: "witness-registration", Version: obs.RegistrationVersion})
 	}
@@ -66,6 +70,9 @@ func Inventory(engine string) []evidence.Artifact {
 // Describe derives source claims from public artifacts instead of CLI-supplied
 // verdicts. The original source bytes are retained; historical formats do not change.
 func Describe(engine string, files map[string][]byte) (s evidence.Source, c evidence.SourceChecks, err error) {
+	if engine == native.Engine {
+		return describeNative(files)
+	}
 	if engine == obs.Engine {
 		return describeWitness(files)
 	}
@@ -246,6 +253,10 @@ func Check(o *evidence.Opened) {
 			c.Status = "FAILED"
 			c.Problems = append(c.Problems, "PUBLISHER_REUSES_WITNESS_KEY")
 		}
+	}
+	if s.Engine == native.Engine && !nativePublisherSeparated(o) {
+		c.Status = "FAILED"
+		c.Problems = append(c.Problems, "PUBLISHER_REUSES_NATIVE_WITNESS_OR_AUTHORITY")
 	}
 	o.Result.SourceChecks = c
 }

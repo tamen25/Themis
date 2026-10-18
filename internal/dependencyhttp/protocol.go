@@ -18,15 +18,16 @@ import (
 )
 
 const (
-	Version        = "themis.native-http/v1alpha1"
-	PlanVersion    = "themis.native-http-plan/v1alpha1"
-	BindingVersion = "themis.native-http-installation/v1alpha1"
-	GrantVersion   = "themis.native-http-grant/v1alpha1"
-	CommandVersion = "themis.native-http-command/v1alpha1"
-	MaxDelayMS     = 200
-	MaxLifetimeMS  = 2000
-	RequestMS      = 750
-	MaxBody        = 64 << 10
+	Version                 = "themis.native-http/v1alpha1"
+	PlanVersion             = "themis.native-http-plan/v1alpha1"
+	BindingVersion          = "themis.native-http-installation/v1alpha1"
+	GrantVersion            = "themis.native-http-grant/v1alpha1"
+	CommandVersion          = "themis.native-http-command/v1alpha1"
+	AuthorityReceiptVersion = "themis.native-http-authority-receipt/v1alpha1"
+	MaxDelayMS              = 200
+	MaxLifetimeMS           = 2000
+	RequestMS               = 750
+	MaxBody                 = 64 << 10
 )
 
 var ErrDenied = errors.New("native dependency authority or identity denied")
@@ -281,4 +282,32 @@ func (r Reply) Verified(identity Process, nonce, kind string) bool {
 	s := r.Signature
 	r.Signature = ""
 	return r.Version == Version && r.Identity == identity && r.Nonce == nonce && hexID.MatchString(nonce) && r.Kind == kind && Verify(Version, r, s, identity.Key)
+}
+
+// AuthorityReceipt is a distinct read-only public proof. It exposes commitments
+// to retained authority, never a Grant, command signature or private capability.
+// Existing Reply/Command wire bytes and state transitions are unchanged.
+type AuthorityReceipt struct {
+	Version      string  `json:"version"`
+	Identity     Process `json:"identity"`
+	Nonce        string  `json:"nonce"`
+	Invocation   string  `json:"invocation"`
+	Code         int     `json:"code"`
+	PlanDigest   string  `json:"planDigest"`
+	GrantDigest  string  `json:"grantDigest"`
+	ApplyKeyID   string  `json:"applyKeyId"`
+	CleanupKeyID string  `json:"cleanupKeyId"`
+	State        State   `json:"state"`
+	Signature    string  `json:"signature"`
+}
+
+func PublicKeyID(key string) string {
+	raw, _ := hex.DecodeString(key)
+	hash := sha256.Sum256(raw)
+	return hex.EncodeToString(hash[:])
+}
+func (r AuthorityReceipt) Verified(identity Process, nonce, invocation string) bool {
+	sig := r.Signature
+	r.Signature = ""
+	return r.Version == AuthorityReceiptVersion && r.Identity == identity && r.Nonce == nonce && hexID.MatchString(nonce) && r.Invocation == invocation && hexID.MatchString(invocation) && Verify(AuthorityReceiptVersion, r, sig, identity.Key)
 }

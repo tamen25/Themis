@@ -89,3 +89,7 @@ requirements in a record do not imply an existing execution component.
 | [T087](T087-native-once-authority.md) | Native one-use approval and nonrenewing mutation |
 | [T088](T088-native-effect-recovery-cleanup.md) | Actual independent effect, outcome, recovery and original cleanup |
 | [T089](T089-native-privilege-boundary.md) | Fixed synthetic egress and no runtime workload mutation |
+| [T090](T090-native-witness-registration-and-authority.md) | Native public approval, live readiness and actual actuator grant commitments |
+| [T091](T091-native-witness-measurement-and-interruption.md) | Independent signed measurements, bounded sessions and interrupted prefixes |
+| [T092](T092-native-source-mapping-and-trust.md) | Explicit native evidence mapping and separate conservative findings |
+| [T093](T093-native-witness-trust-and-privilege.md) | Exact external scope, actor key separation and unchanged privilege boundary |

@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
@@ -438,6 +439,34 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "nonce required", 400)
 		return
 	}
+	if r.Method == "GET" && s.Identity.Role == "proxy" && strings.HasPrefix(r.URL.Path, "/receipt/") {
+		invocation := strings.TrimPrefix(r.URL.Path, "/receipt/")
+		if !hexID.MatchString(invocation) {
+			http.Error(w, "receipt invocation denied", 400)
+			return
+		}
+		proof := AuthorityReceipt{Version: AuthorityReceiptVersion, Identity: s.Identity, Nonce: nonce, Invocation: invocation, Code: 404}
+		s.mu.Lock()
+		s.activeLocked()
+		if epoch := s.epochs[invocation]; epoch != nil {
+			proof.Code = 200
+			proof.PlanDigest = epoch.grant.Digest
+			proof.GrantDigest = Hash(epoch.grant)
+			proof.ApplyKeyID = PublicKeyID(epoch.grant.ApplyKey)
+			proof.CleanupKeyID = PublicKeyID(epoch.grant.CleanupKey)
+			if time.Now().Before(s.unconfirmedUntil) {
+				proof.Code = 503
+			} else {
+				proof.State = epoch.state
+			}
+		}
+		s.mu.Unlock()
+		proof.Signature = Sign(AuthorityReceiptVersion, proof, s.key)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(proof.Code)
+		_, _ = w.Write(JSON(proof))
+		return
+	}
 	reply := Reply{Nonce: nonce, Kind: "identity", Code: 200}
 	switch {
 	case r.Method == "GET" && r.URL.Path == "/identity":
@@ -513,6 +542,30 @@ func Fetch(ctx context.Context, c *http.Client, endpoint string) (Reply, error) 
 	}
 	if r.Code != resp.StatusCode {
 		return r, fmt.Errorf("response status mismatch")
+	}
+	return r, nil
+}
+
+func FetchAuthority(ctx context.Context, c *http.Client, endpoint string) (AuthorityReceipt, error) {
+	var r AuthorityReceipt
+	req, e := http.NewRequestWithContext(ctx, "GET", endpoint, nil)
+	if e != nil {
+		return r, e
+	}
+	resp, e := c.Do(req)
+	if e != nil {
+		return r, e
+	}
+	defer resp.Body.Close()
+	raw, e := io.ReadAll(io.LimitReader(resp.Body, MaxBody+1))
+	if e != nil || len(raw) > MaxBody {
+		return r, errors.New("bounded authority receipt")
+	}
+	if e = Decode(raw, &r); e != nil {
+		return r, e
+	}
+	if r.Code != resp.StatusCode {
+		return r, errors.New("authority receipt HTTP mismatch")
 	}
 	return r, nil
 }

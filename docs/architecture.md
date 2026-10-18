@@ -1,5 +1,21 @@
 # Architecture
 
+## Native signed observation integration (T4.3)
+
+`pkg/nativeobservation` is a separate versioned public registration, signature,
+chain, scope and bounded-predicate protocol. `internal/nativewitness` and
+`cmd/themis-native-witness` collect their own actual HTTP measurements through a
+dedicated named read-only Kubernetes principal. `internal/nativeexecution` links
+public approval and signed pre-Apply readiness to the original runner's signed
+Apply nonce. A separate read-only proxy receipt authenticates retained grant/key
+commitments and current original-invocation state without changing the actuator.
+
+One explicit `native-dependency-witness/v1` source mapping and additive
+`pkg/evidenceverify.VerifyNative` expose original source candidate, independent
+corroboration, cleanup and unresolved execution trust. T4.0 envelope and old source
+outputs remain unchanged. No provider registry or new controller execution path
+exists. See [protocol and limits](native-witness.md).
+
 ## Native dependency execution (T4.2)
 
 `internal/dependencyhttp` and `cmd/themis-dependency-fixture` implement the three
