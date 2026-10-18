@@ -24,3 +24,17 @@ Tests explicitly distinguish original source outcomes, supported consistency
 checks, publisher signature trust and unproven execution. Keep these legitimate
 fixtures in source control. All data is the fixed synthetic application workload;
 there are no raw database files, backups, WAL, credentials or private state here.
+
+`witness-*` directories retain six actual T4.1 histories from the newly owned
+Kind cluster `themis-t41-76922dae33bd`: healthy, buggy FAIL, no-op, actual witness
+process interruption, cleanup pending and the healthy basis for a controlled
+public phase-disagreement test. Each has the unchanged original runner artifacts,
+signed registration and exact witness journal in a lossless bounded base64 JSON
+wrapper. Public policies are explicit test pins, not authority for arbitrary
+imports. They contain no private keys or grants. The disagreement test changes
+only a public report copy; actual runner and witness histories remain unchanged.
+
+These fixtures exercise signatures and consistency offline. They are not fresh
+experiments during ordinary unit tests, production guarantees, trusted timestamps
+or proof of independent administrators/machines. Full live tests are opt-in and
+produce their own newly registered sessions and public execution evidence.

@@ -1,5 +1,10 @@
 # Signed evidence bundles (T4.0)
 
+T4.1 adds a separate [live-observation mapping and verifier result](live-observation.md).
+This T4.0 envelope, its original source mappings and historical bundle bytes remain
+unchanged. Publisher publication is still retrospective; independently signed
+observation provenance is reported separately, without upgrading execution trust.
+
 ## Threat model
 
 An importer controls every archive byte, filename, embedded observation key,

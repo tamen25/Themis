@@ -88,6 +88,11 @@ jobs:
           go test ./pkg/evidence -run '^$' -fuzz '^FuzzManifest$' -fuzztime 10s
           go test ./pkg/evidence -run '^$' -fuzz '^FuzzArchive$' -fuzztime 10s
           go test ./pkg/evidence -run '^$' -fuzz '^FuzzSignature$' -fuzztime 10s
+      - name: Fuzz signed observation and witness trust boundaries
+        if: runner.os == 'Linux'
+        run: |
+          go test ./pkg/liveobservation -run '^$' -fuzz '^FuzzSignedObservationJournal$' -fuzztime 10s
+          go test ./pkg/liveobservation -run '^$' -fuzz '^FuzzWitnessPolicy$' -fuzztime 10s
 
   kind-dry-run:
     runs-on: ubuntu-latest

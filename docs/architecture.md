@@ -1,5 +1,20 @@
 # Architecture
 
+## Live observation boundary (T4.1)
+
+`cmd/themis-witness` and `internal/livewitness` implement one separate observer
+process for the existing owned Kind fixture. `pkg/liveobservation` contains the
+bounded signing/chain/trust protocol without infrastructure clients. The witness
+independently resolves the exact target using dedicated credentials and measures
+its own paired HTTP requests. It never receives grants or cleanup capabilities.
+The existing runner keeps its evaluator, journal format and independent cleanup.
+
+A concrete new source mapping joins original runner evidence to signed observer
+records. `pkg/evidenceverify.VerifyObserved` adds external witness policy and a
+separate corroboration result; old `Verify` output stays unchanged for old sources.
+The standard-library T4.0 archive core and existing RBAC remain unchanged. See
+[protocol, limits and operation](live-observation.md) and ADRs T079-T083.
+
 ## Retrospective evidence publication (T4.0)
 
 `pkg/evidence` is a standalone standard-library archive/signature/trust package.

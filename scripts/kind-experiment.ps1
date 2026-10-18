@@ -1,10 +1,14 @@
 param(
     [ValidateSet('up','down','restart-controller','test-lifecycle','test-coordination')][string]$Action='up',
-    [string]$CommandProxy=''
+    [string]$CommandProxy='',
+    [string]$ClusterName='themis-t21'
 )
 $ErrorActionPreference='Stop'
 $repository=Split-Path -Parent $PSScriptRoot
-$state=Join-Path $repository '.themis/kind-t21'
+if($ClusterName -ne 'themis-t21' -and $ClusterName -notmatch '^themis-t41-[a-f0-9]{12}$'){throw 'Only legacy or fresh T4.1 owned cluster names are accepted'}
+$context='kind-'+$ClusterName
+$ownershipVersion=if($ClusterName -eq 'themis-t21'){'themis.kind-ownership/t2.1-v1'}else{'themis.kind-ownership/t4.1-v1'}
+$state=Join-Path $repository ('.themis/'+$ClusterName)
 $adminConfig=Join-Path $state 'admin-kubeconfig'
 $kind=Join-Path $repository '.cache/tools/kind'
 $runner=Join-Path $repository '.cache/themis-kube'
@@ -27,10 +31,10 @@ function Tool([string]$Program,[string[]]$Arguments){
     }
     return $output
 }
-function Kube([string[]]$Arguments){Tool 'kubectl' (@('--kubeconfig',$adminConfig,'--context','kind-themis-t21')+$Arguments)}
+function Kube([string[]]$Arguments){Tool 'kubectl' (@('--kubeconfig',$adminConfig,'--context',$context)+$Arguments)}
 function Owned {
     $owner=[IO.File]::ReadAllText((Join-Path $state 'bootstrap-owner.json'))|ConvertFrom-Json
-    if($owner.clusterName -ne 'themis-t21' -or $owner.context -ne 'kind-themis-t21' -or -not $owner.clusterUID){throw 'Complete owned Kind identity required'}
+    if($owner.clusterName -ne $ClusterName -or $owner.context -ne $context -or -not $owner.clusterUID){throw 'Complete owned Kind identity required'}
     $live=Kube @('get','namespace','kube-system','-o','jsonpath={.metadata.uid}')
     if($live -ne $owner.clusterUID){throw 'Cluster UID differs; refusing all mutations'}
     if($owner.namespaceUID){
@@ -91,8 +95,8 @@ try {
             return
         }
         if($Action -eq 'down'){
-            Tool $kind @('delete','cluster','--name','themis-t21')
-            Write-Output 'Deleted only the UID-verified owned themis-t21 cluster; private records retained.'
+            Tool $kind @('delete','cluster','--name',$ClusterName)
+            Write-Output 'Deleted only the UID-verified owned cluster; private records retained.'
         }else{
             Mutate @('rollout','restart','deployment/themis-controller','-n','themis-test')
             Kube @('rollout','status','deployment/themis-controller','-n','themis-test','--timeout=120s')
@@ -101,10 +105,10 @@ try {
     }
     if((Tool $kind @('version')) -notmatch '^kind v0\.32\.0 '){throw 'Pinned Kind v0.32.0 required in .cache/tools'}
     $previous=@(Tool $kind @('get','clusters'))
-    if($previous -contains 'themis-t21' -or (Test-Path -LiteralPath $state)){throw 'Requires a new owned cluster and private state; never adopts existing clusters'}
+    if($previous -contains $ClusterName -or (Test-Path -LiteralPath $state)){throw 'Requires a new owned cluster and private state; never adopts existing clusters'}
     New-Item -ItemType Directory -Path $state | Out-Null
     Protect $state $true
-    $owner=[ordered]@{version='themis.kind-bootstrap/t2.1-v1';clusterName='themis-t21';context='kind-themis-t21';previousClusters=$previous;clusterUID='';namespaceUID=''}
+    $owner=[ordered]@{version='themis.kind-bootstrap/t2.1-v1';clusterName=$ClusterName;context=$context;previousClusters=$previous;clusterUID='';namespaceUID=''}
     SaveOwner $owner
     $env:GOCACHE=Join-Path $repository '.cache/go-build'
     $env:GOMODCACHE=Join-Path $repository '.cache/go-mod'
@@ -113,10 +117,10 @@ try {
     New-Item -ItemType Directory -Force -Path $env:GOCACHE,$env:GOMODCACHE,$env:GOPATH,$env:GOTMPDIR | Out-Null
     Tool 'go' @('build','-trimpath','-o',$runner,'./cmd/themis-kube')
     $approval=(Tool $runner @('init','--state',$state))-join "`n"|ConvertFrom-Json
-    Tool $kind @('create','cluster','--name','themis-t21','--config','examples/kubernetes-experiment/kind.yaml','--kubeconfig',$adminConfig,'--wait','120s')
+    Tool $kind @('create','cluster','--name',$ClusterName,'--config','examples/kubernetes-experiment/kind.yaml','--kubeconfig',$adminConfig,'--wait','120s')
     Protect $adminConfig $false
     $owner.clusterUID=Kube @('get','namespace','kube-system','-o','jsonpath={.metadata.uid}');SaveOwner $owner
-    $managerArgs=(Kube @('get','pod','kube-controller-manager-themis-t21-control-plane','-n','kube-system','-o','jsonpath={.spec.containers[0].command}'))-join "`n"|ConvertFrom-Json
+    $managerArgs=(Kube @('get','pod',('kube-controller-manager-'+$ClusterName+'-control-plane'),'-n','kube-system','-o','jsonpath={.spec.containers[0].command}'))-join "`n"|ConvertFrom-Json
     if($managerArgs -notcontains '--resource-quota-sync-period=5s'){throw 'Owned Kind quota-resync configuration was not applied; refusing setup'}
     Mutate @('create','-f','examples/kubernetes/workload.yaml')
     $owner.namespaceUID=Kube @('get','namespace','themis-test','-o','jsonpath={.metadata.uid}');SaveOwner $owner
@@ -157,15 +161,15 @@ try {
         $tag=$item[0]+':t21-'+$hash
         Tool 'docker' @('build','--network','none','-f',$item[1],'-t',$tag,$build)
         $null=Owned
-        Tool $kind @('load','docker-image','--name','themis-t21',$tag)
+        Tool $kind @('load','docker-image','--name',$ClusterName,$tag)
         if($item[0] -eq 'themis-controller'){$controllerImage=$tag}else{$fixtureTag='docker.io/library/'+$tag}
     }
     $null=Owned
-    $listing=(Tool 'docker' @('exec','themis-t21-control-plane','ctr','-n','k8s.io','images','list',('name=='+$fixtureTag)))-join "`n"
+    $listing=(Tool 'docker' @('exec',($ClusterName+'-control-plane'),'ctr','-n','k8s.io','images','list',('name=='+$fixtureTag)))-join "`n"
     if($listing -notmatch '\s(sha256:[a-f0-9]{64})\s'){throw 'Imported fixture manifest digest unavailable'}
     $fixtureImage='docker.io/library/themis-kube-fixture@'+$Matches[1]
     $null=Owned
-    Tool 'docker' @('exec','themis-t21-control-plane','ctr','-n','k8s.io','images','tag',$fixtureTag,$fixtureImage)
+    Tool 'docker' @('exec',($ClusterName+'-control-plane'),'ctr','-n','k8s.io','images','tag',$fixtureTag,$fixtureImage)
     $fixtureManifest=[IO.File]::ReadAllText((Join-Path $repository 'examples/kubernetes-experiment/fixture.yaml')).Replace('REPLACE_WITH_OWNED_FIXTURE_DIGEST',$fixtureImage)
     $fixturePath=PrivateFile 'fixture.yaml' $fixtureManifest
     Mutate @('create','-f',$fixturePath)
@@ -193,9 +197,9 @@ try {
     $token=Kube @('create','token','themis-runner','-n','themis-test','--duration=1h')
     $admin=(Kube @('config','view','--raw','--minify','-o','json'))-join "`n"|ConvertFrom-Json
     $cluster=$admin.clusters[0].cluster
-    $operatorConfig=[ordered]@{apiVersion='v1';kind='Config';clusters=@(@{name='kind-themis-t21';cluster=@{server=$cluster.server;'certificate-authority-data'=$cluster.'certificate-authority-data'}});contexts=@(@{name='kind-themis-t21';context=@{cluster='kind-themis-t21';user='themis-runner';namespace='themis-test'}});'current-context'='kind-themis-t21';users=@(@{name='themis-runner';user=@{token=$token}})}
+    $operatorConfig=[ordered]@{apiVersion='v1';kind='Config';clusters=@(@{name=$context;cluster=@{server=$cluster.server;'certificate-authority-data'=$cluster.'certificate-authority-data'}});contexts=@(@{name=$context;context=@{cluster=$context;user='themis-runner';namespace='themis-test'}});'current-context'=$context;users=@(@{name='themis-runner';user=@{token=$token}})}
     $null=PrivateFile 'operator-kubeconfig' ($operatorConfig|ConvertTo-Json -Depth 8)
-    $executionOwner=[ordered]@{version='themis.kind-ownership/t2.1-v1';clusterName='themis-t21';context='kind-themis-t21';clusterUID=$owner.clusterUID;namespaceUID=$owner.namespaceUID;operator=$operator;approverKey=$approval.approverKey;deploymentUID=$deployment.metadata.uid;fixtureImage=$fixtureImage;fixtureImageID=$pod.status.containerStatuses[0].imageID}
+    $executionOwner=[ordered]@{version=$ownershipVersion;clusterName=$ClusterName;context=$context;clusterUID=$owner.clusterUID;namespaceUID=$owner.namespaceUID;operator=$operator;approverKey=$approval.approverKey;deploymentUID=$deployment.metadata.uid;fixtureImage=$fixtureImage;fixtureImageID=$pod.status.containerStatuses[0].imageID}
     $null=PrivateFile 'execution-owner.json' ($executionOwner|ConvertTo-Json -Depth 5)
-    Write-Output 'Owned themis-t21 fixture and restricted runner installed. No experiment has run.'
+    Write-Output "Owned $ClusterName fixture and restricted runner installed. No experiment has run."
 }finally{Pop-Location}

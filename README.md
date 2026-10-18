@@ -1,5 +1,12 @@
 # Themis
 
+T4.1 adds [independently signed live application observations](docs/live-observation.md)
+for the owned synthetic Kind experiment. A separate process/key and Kubernetes
+principal measure their own nonce-bound HTTP traffic. External witness trust and
+observation corroboration are separate from publisher trust, the original verdict
+and unresolved whole-execution attestation. No new fault or controller privilege
+is introduced; same-host administrator and clock limitations remain explicit.
+
 T4.0 adds [signed evidence bundles and independent offline verification](docs/evidence-bundles.md).
 Build `go build -o bin/ ./cmd/themis-evidence`. Explicit publication uses a
 separate protected signer; verification requires an external publisher trust

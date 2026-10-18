@@ -4,7 +4,7 @@ ifeq ($(OS),Windows_NT)
 GOBIN := bin/themis.exe
 endif
 
-.PHONY: build controller kube-runner chaosmesh-planner postgres-runner evidence fmt fmt-check vet test race fuzz check
+.PHONY: build controller kube-runner chaosmesh-planner postgres-runner evidence witness fmt fmt-check vet test race fuzz check
 
 build:
 	$(GO) build -trimpath -o $(GOBIN) ./cmd/themis
@@ -23,6 +23,9 @@ postgres-runner:
 
 evidence:
 	$(GO) build -trimpath -o bin/ ./cmd/themis-evidence
+
+witness:
+	$(GO) build -trimpath -o bin/ ./cmd/themis-witness
 
 fmt:
 	$(GO) fmt ./...
@@ -56,5 +59,7 @@ fuzz:
 	$(GO) test ./pkg/evidence -run '^$$' -fuzz '^FuzzManifest$$' -fuzztime 10s
 	$(GO) test ./pkg/evidence -run '^$$' -fuzz '^FuzzArchive$$' -fuzztime 10s
 	$(GO) test ./pkg/evidence -run '^$$' -fuzz '^FuzzSignature$$' -fuzztime 10s
+	$(GO) test ./pkg/liveobservation -run '^$$' -fuzz '^FuzzSignedObservationJournal$$' -fuzztime 10s
+	$(GO) test ./pkg/liveobservation -run '^$$' -fuzz '^FuzzWitnessPolicy$$' -fuzztime 10s
 
-check: fmt-check vet test build controller kube-runner evidence
+check: fmt-check vet test build controller kube-runner evidence witness

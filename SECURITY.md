@@ -1,5 +1,15 @@
 # Security policy
 
+T4.1's [live witness](docs/live-observation.md) has a dedicated signing key,
+Kubernetes ServiceAccount and exact-Pod forwarding session. It cannot use runner
+execution or cleanup authority. Named read/forward privileges do not grant workload
+mutation, exec or Secrets access. Signed nonce-bound responses identify the pinned
+fixture; the witness signs its own client timing. Exact-session external trust is
+required and publisher/source-key reuse is rejected. Same OS user/admin isolation,
+honest infrastructure, trusted UTC and noncollusion are not established. Witness
+crash, API loss and cleanup uncertainty remain incomplete evidence; whole trusted
+execution stays INCONCLUSIVE even when application observations correlate.
+
 T4.0 [evidence publication](docs/evidence-bundles.md) authenticates publisher
 assertions about artifact bytes. External current, unrevoked trust policy is
 required; embedded keys never grant publisher trust. Offline execution stays

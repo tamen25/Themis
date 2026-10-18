@@ -1,5 +1,10 @@
 # CLI reference
 
+For the separate `themis-witness` commands and the additive evidence
+`--witness-session` / `--witness-policy` flags, see
+[live observation](live-observation.md). Those flags add exact-scope observation
+corroboration; they do not change existing execution or historical verdict commands.
+
 `themis-evidence` is the separate publication/offline verifier binary. Its
 commands, stable JSON, external trust policy and exit codes are specified in
 [signed evidence bundles](evidence-bundles.md). Verification authenticates artifact

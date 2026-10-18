@@ -78,3 +78,8 @@ requirements in a record do not imply an existing execution component.
 | [T076](T076-public-source-mappings.md) | Two concrete pure source mappings and public PostgreSQL projection |
 | [T077](T077-explicit-evidence-publication.md) | Protected explicit signing, snapshot checks and exclusive publication |
 | [T078](T078-offline-verification-api.md) | Independent offline APIs without infrastructure execution authority |
+| [T079](T079-live-witness-protocol.md) | Separate process/key and nonce-bound signed observation journal |
+| [T080](T080-witness-identity-and-isolation.md) | Dedicated Kubernetes principal and explicit same-host assumptions |
+| [T081](T081-live-phase-correlation.md) | Phase inference, independent timings and disagreement semantics |
+| [T082](T082-additive-observation-verification.md) | Additive witness mapping/result without execution-trust upgrades |
+| [T083](T083-witness-bounds-and-crash-recovery.md) | Fixed budgets, durable prefixes and no session resumption |

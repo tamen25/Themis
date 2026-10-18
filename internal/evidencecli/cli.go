@@ -22,6 +22,7 @@ import (
 	"github.com/tamen25/themis/internal/postgres"
 	"github.com/tamen25/themis/pkg/evidence"
 	"github.com/tamen25/themis/pkg/evidenceverify"
+	obs "github.com/tamen25/themis/pkg/liveobservation"
 )
 
 type keyRecord struct {
@@ -47,7 +48,7 @@ func run(args []string, output io.Writer, now time.Time) int {
 	}
 	f := flag.NewFlagSet(args[0], flag.ContinueOnError)
 	f.SetOutput(io.Discard)
-	var engine, source, state, out, keyDir, publisher, bundle, trust, proposal, recordPath, journalPath string
+	var engine, source, state, out, keyDir, publisher, bundle, trust, proposal, recordPath, journalPath, witnessSession, witnessTrust string
 	switch args[0] {
 	case "keygen":
 		f.StringVar(&keyDir, "key-dir", "", "new protected signer directory")
@@ -59,6 +60,7 @@ func run(args []string, output io.Writer, now time.Time) int {
 		f.StringVar(&proposal, "proposal", "", "explicit public coordination proposal")
 		f.StringVar(&recordPath, "record", "", "public T2.3 coordination record instead of private run directory")
 		f.StringVar(&journalPath, "journal", "", "explicit matching historical journal for record export")
+		f.StringVar(&witnessSession, "witness-session", "", "explicit observation session for the new witness mapping")
 	case "bundle":
 		f.StringVar(&engine, "engine", "", "source mapping")
 		f.StringVar(&source, "source", "", "curated public export directory")
@@ -69,6 +71,7 @@ func run(args []string, output io.Writer, now time.Time) int {
 		f.StringVar(&bundle, "bundle", "", "signed bundle path")
 		if args[0] == "verify" {
 			f.StringVar(&trust, "trust-policy", "", "independently provisioned trust policy")
+			f.StringVar(&witnessTrust, "witness-policy", "", "independently provisioned exact-scope witness policy")
 		}
 	default:
 		return fail("USAGE", "unsupported evidence command", 2)
@@ -102,7 +105,7 @@ func run(args []string, output io.Writer, now time.Time) int {
 		}
 		return 0
 	case "export":
-		if out == "" || len(evidencesource.Inventory(engine)) == 0 || (state == "") == (recordPath == "") || recordPath != "" && (engine != evidencesource.Kubernetes || journalPath == "") {
+		if out == "" || len(evidencesource.Inventory(engine)) == 0 || (state == "") == (recordPath == "") || recordPath != "" && (engine != evidencesource.Kubernetes && engine != obs.Engine || journalPath == "") || engine == obs.Engine && witnessSession == "" {
 			return fail("USAGE", "explicit supported engine, state and out are required", 2)
 		}
 		var files map[string][]byte
@@ -114,6 +117,11 @@ func run(args []string, output io.Writer, now time.Time) int {
 		}
 		if err != nil {
 			return fail("SOURCE", err.Error(), 6)
+		}
+		if engine == obs.Engine {
+			if err = exportWitness(files, witnessSession); err != nil {
+				return fail("SOURCE", err.Error(), 6)
+			}
 		}
 		s, c, err := evidencesource.Describe(engine, files)
 		if err != nil {
@@ -214,7 +222,26 @@ func run(args []string, output io.Writer, now time.Time) int {
 			}{o.Result, failure{evidence.ResultVersion, "INTEGRITY_OR_SIGNATURE", err.Error()}})
 			return 4
 		}
-		if !emit(o.Result) {
+		var observation *obs.Finding
+		if o.Manifest.Source.Engine == obs.Engine {
+			var witnessPolicy *obs.Policy
+			if witnessTrust != "" {
+				raw, err := readFile(witnessTrust, 128<<10)
+				if err != nil {
+					return fail("WITNESS_TRUST", "external witness policy unavailable", 5)
+				}
+				p, err := obs.ReadPolicy(raw)
+				if err != nil {
+					return fail("WITNESS_TRUST", "invalid external witness policy", 5)
+				}
+				witnessPolicy = &p
+			}
+			finding := evidencesource.Corroborate(o, witnessPolicy, now)
+			observation = &finding
+			if !emit(evidenceverify.ObservedResult{Version: "themis.witness-bundle-verification/v1alpha1", Evidence: o.Result, ObservationCorroboration: finding}) {
+				return 3
+			}
+		} else if !emit(o.Result) {
 			return 3
 		}
 		if args[0] == "inspect" {
@@ -222,6 +249,18 @@ func run(args []string, output io.Writer, now time.Time) int {
 		}
 		if o.Result.PublisherTrust != "TRUSTED" {
 			return 5
+		}
+		if observation != nil {
+			switch observation.Status {
+			case "WITNESS_IDENTITY_UNTRUSTED":
+				return 5
+			case "WITNESS_SIGNATURE_INVALID", "OBSERVATIONS_CONTRADICTORY":
+				return 9
+			case "UNSUPPORTED_SOURCE":
+				return 7
+			case "OBSERVATIONS_INCOMPLETE":
+				return 8
+			}
 		}
 		switch o.Result.SourceChecks.Status {
 		case "FAILED":
