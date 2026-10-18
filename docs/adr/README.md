@@ -83,3 +83,9 @@ requirements in a record do not imply an existing execution component.
 | [T081](T081-live-phase-correlation.md) | Phase inference, independent timings and disagreement semantics |
 | [T082](T082-additive-observation-verification.md) | Additive witness mapping/result without execution-trust upgrades |
 | [T083](T083-witness-bounds-and-crash-recovery.md) | Fixed budgets, durable prefixes and no session resumption |
+| [T084](T084-native-dependency-path.md) | One real fixed application/proxy/dependency path |
+| [T085](T085-final-actuator-binding.md) | Signed exact identities enforced at the final proxy boot |
+| [T086](T086-native-monotonic-expiry.md) | Local monotonic expiry, in-flight clipping and fresh restart |
+| [T087](T087-native-once-authority.md) | Native one-use approval and nonrenewing mutation |
+| [T088](T088-native-effect-recovery-cleanup.md) | Actual independent effect, outcome, recovery and original cleanup |
+| [T089](T089-native-privilege-boundary.md) | Fixed synthetic egress and no runtime workload mutation |

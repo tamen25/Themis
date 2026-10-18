@@ -1,5 +1,13 @@
 # Themis
 
+T4.2 adds one [native bounded HTTP dependency experiment](docs/native-dependency.md):
+a real application calls a fixed proxy and separate synthetic dependency. The
+proxy enforces exact boot/target approval, once-only application and independent
+monotonic expiry. Separate actual probing establishes effect, application outcome
+and recovery; cleanup uncertainty remains visible. Scope is disposable owned Kind.
+Signed witness/bundle integration is deferred to T4.3; Chaos Mesh remains disabled.
+See the [tracked roadmap](docs/roadmap.md).
+
 T4.1 adds [independently signed live application observations](docs/live-observation.md)
 for the owned synthetic Kind experiment. A separate process/key and Kubernetes
 principal measure their own nonce-bound HTTP traffic. External witness trust and

@@ -1,5 +1,17 @@
 # Architecture
 
+## Native dependency execution (T4.2)
+
+`internal/dependencyhttp` and `cmd/themis-dependency-fixture` implement the three
+concrete application/proxy/dependency roles and separate native authority domains.
+`internal/dependencyexperiment` and `cmd/themis-dependency` independently resolve
+Kubernetes identity, approve frozen plans, claim/journal once, observe actual HTTP,
+evaluate measurements and reconcile original cleanup. The proxy owns its monotonic
+expiry and boot-bound authorization. The observer never receives fault authority.
+Existing controller, T4.1 witness, evidence mappings and historical engines remain
+unchanged. See [protocol and limitations](native-dependency.md), ADRs T084-T089
+and the [roadmap](roadmap.md). Full signed native integration belongs to T4.3.
+
 ## Live observation boundary (T4.1)
 
 `cmd/themis-witness` and `internal/livewitness` implement one separate observer

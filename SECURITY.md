@@ -1,5 +1,18 @@
 # Security policy
 
+T4.2's [native dependency adapter](docs/native-dependency.md) supports only a fresh
+owned Kind application/proxy/dependency path. A signed installer binding, explicit
+exact-plan approval and the actuator's own Pod/boot/key check gate one fixed delay.
+Process-local monotonic expiry and in-flight clipping do not require a runner,
+controller or API. Restart does not inherit authority. A crashed proxy can still
+disrupt real dependency traffic; expiration alone cannot establish recovery.
+Runtime has no workload mutation, exec or Secrets privilege. Dedicated read-only
+observation, fixed-IP egress transports and original-identity cleanup keep their
+roles separate. Same user/admin, trusted images/Downward API, operating monotonic
+clock/scheduler and filesystem limitations remain explicit. No privileged network
+chaos, CNI isolation, production execution or whole-run attestation is claimed.
+Old Chaos Mesh blockers and its execution-disabled admission remain unchanged.
+
 T4.1's [live witness](docs/live-observation.md) has a dedicated signing key,
 Kubernetes ServiceAccount and exact-Pod forwarding session. It cannot use runner
 execution or cleanup authority. Named read/forward privileges do not grant workload

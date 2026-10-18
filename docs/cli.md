@@ -1,5 +1,12 @@
 # CLI reference
 
+The separate `themis-dependency` binary provides `init`, `bind`, `plan`, `approve`,
+`observe`, `run`, `inspect`, `cancel`, `reconcile` and offline `replay` for one newly
+owned native HTTP dependency path. Approval of the exact plan and an autonomous
+observer precede execution; no VerificationRun creates a fault. See
+[commands, exit codes and limits](native-dependency.md). The native protocol cannot
+reuse old fixture/Chaos Mesh grants and has no T4.1 bundle mapping in this slice.
+
 For the separate `themis-witness` commands and the additive evidence
 `--witness-session` / `--witness-policy` flags, see
 [live observation](live-observation.md). Those flags add exact-scope observation

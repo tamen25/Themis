@@ -1,0 +1,50 @@
+# Installed only in the fresh dedicated namespace. Setup substitutes the three
+# observed exact Pod and ReplicaSet names. Runtime has no workload write verbs.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata: {name: native-observation, namespace: REPLACE_NAMESPACE}
+rules:
+  - apiGroups: [apps]
+    resources: [deployments]
+    resourceNames: [native-application, native-proxy, native-dependency]
+    verbs: [get]
+  - apiGroups: [apps]
+    resources: [replicasets]
+    resourceNames: [REPLACE_REPLICA_SETS]
+    verbs: [get]
+  - apiGroups: ['']
+    resources: [pods]
+    resourceNames: [REPLACE_PODS]
+    verbs: [get]
+  - apiGroups: ['']
+    resources: [pods/portforward]
+    resourceNames: [REPLACE_PODS]
+    verbs: [create]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata: {name: native-observation, namespace: REPLACE_NAMESPACE}
+subjects:
+  - {kind: ServiceAccount, name: native-runner, namespace: REPLACE_NAMESPACE}
+  - {kind: ServiceAccount, name: native-observer, namespace: REPLACE_NAMESPACE}
+roleRef: {apiGroup: rbac.authorization.k8s.io, kind: Role, name: native-observation}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata: {name: native-REPLACE_NAMESPACE-identity}
+rules:
+  - apiGroups: ['']
+    resources: [namespaces]
+    resourceNames: [kube-system, REPLACE_NAMESPACE]
+    verbs: [get]
+  - apiGroups: [authentication.k8s.io]
+    resources: [selfsubjectreviews]
+    verbs: [create]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata: {name: native-REPLACE_NAMESPACE-identity}
+subjects:
+  - {kind: ServiceAccount, name: native-runner, namespace: REPLACE_NAMESPACE}
+  - {kind: ServiceAccount, name: native-observer, namespace: REPLACE_NAMESPACE}
+roleRef: {apiGroup: rbac.authorization.k8s.io, kind: ClusterRole, name: native-REPLACE_NAMESPACE-identity}
