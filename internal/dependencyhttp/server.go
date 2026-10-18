@@ -34,6 +34,17 @@ type epoch struct {
 	deadline time.Time
 	stopped  chan struct{}
 }
+
+// The concrete file is used in production. Tests wrap its actual writes/Sync to
+// exercise failures without exposing failure controls through runtime config.
+type controlJournal interface {
+	io.Writer
+	Sync() error
+	Close() error
+	Name() string
+	Stat() (os.FileInfo, error)
+}
+
 type Server struct {
 	Identity         Process
 	key              string
@@ -46,7 +57,7 @@ type Server struct {
 	binding          *Binding
 	epochs           map[string]*epoch
 	active           *epoch
-	journal          *os.File
+	journal          controlJournal
 	journalBytes     int
 	journalDigest    [32]byte
 	peerClient       *http.Client // controlled HTTP peer transport in tests; never exposed by config
@@ -119,7 +130,8 @@ func (s *Server) persist(v any) error {
 	if s.poisoned || s.journal == nil {
 		return errors.New("control journal unavailable")
 	}
-	if localstate.Check(s.journal.Name()) != nil {
+	owner, e := s.journal.Stat()
+	if e != nil || localstate.Check(s.journal.Name()) != nil {
 		s.poisoned = true
 		return errors.New("control journal identity")
 	}
@@ -127,6 +139,12 @@ func (s *Server) persist(v any) error {
 	if e != nil {
 		s.poisoned = true
 		return e
+	}
+	opened, e := input.Stat()
+	if e != nil || !os.SameFile(owner, opened) {
+		_ = input.Close()
+		s.poisoned = true
+		return errors.New("control journal file was substituted")
 	}
 	prior, e := io.ReadAll(io.LimitReader(input, (512<<10)+1))
 	_ = input.Close()
@@ -149,6 +167,11 @@ func (s *Server) persist(v any) error {
 	if e != nil {
 		s.poisoned = true
 		return e
+	}
+	current, e := os.Lstat(s.journal.Name())
+	if e != nil || !current.Mode().IsRegular() || !os.SameFile(owner, current) {
+		s.poisoned = true
+		return errors.New("control journal identity changed during publication")
 	}
 	s.journalBytes += len(b)
 	s.journalDigest = sha256.Sum256(append(prior, b...))
@@ -305,9 +328,6 @@ func (s *Server) mutate(ctx context.Context, c Command) (State, error) {
 		return State{}, e
 	}
 	now = time.Now()
-	if ctx.Err() != nil || !c.Grant.Valid(now, c.Action == "apply") {
-		return State{}, ErrDenied
-	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.activeLocked()
@@ -315,6 +335,16 @@ func (s *Server) mutate(ctx context.Context, c Command) (State, error) {
 	if e == nil {
 		e = &epoch{grant: c.Grant, state: State{Invocation: inv, Reason: "not-applied"}, stopped: make(chan struct{})}
 		s.epochs[inv] = e
+	}
+	// Successful durable intent consumes the attempt even if admission is then
+	// interrupted. A lost/canceled request cannot turn that intent into permission
+	// for a later first Apply. Existing active effects retain independent expiry.
+	if ctx.Err() != nil || !c.Grant.Valid(now, c.Action == "apply") {
+		if !e.state.Applied {
+			e.state.Fenced = true
+			e.state.Reason = "admission-interrupted"
+		}
+		return e.state, ErrDenied
 	}
 	if c.Action == "remove" {
 		e.state.Fenced = true
@@ -334,6 +364,8 @@ func (s *Server) mutate(ctx context.Context, c Command) (State, error) {
 		d = remaining
 	}
 	if d <= 0 {
+		e.state.Fenced = true
+		e.state.Reason = "apply-window-exhausted"
 		return State{}, ErrDenied
 	}
 	e.deadline = now.Add(d)

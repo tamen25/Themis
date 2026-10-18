@@ -286,6 +286,21 @@ func RunWithReadiness(ctx context.Context, state, dir, observations, applyNonce 
 	if e = record(identityKind, nil); e != nil {
 		return report, e
 	}
+	// Acceptance of stop and immutable FINAL/report publication share the same
+	// gate as Apply. Cancellation can arrive while waiting for observations or
+	// identity checks, after the active-fault loop has already finished.
+	finalCtx, finalCancel := context.WithTimeout(context.Background(), 1500*time.Millisecond)
+	defer finalCancel()
+	finalGate, e := gate(finalCtx, dir)
+	if e != nil {
+		report.Verdict = "INCONCLUSIVE"
+		return report, e
+	}
+	defer finalGate.Close()
+	cancelled = cancelled || stopped(dir) || ctx.Err() != nil
+	if cancelled {
+		report.Execution = "CANCELLED"
+	}
 	if applyError != nil || cancelled || !identityConfirmed {
 		report.Verdict = "INCONCLUSIVE"
 	}

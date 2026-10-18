@@ -11,8 +11,8 @@ execution. The current review handoff records actual tests, skips and limitation
 | T4.1 | Independently signed live witness observations | Complete; whole execution remains unverified |
 | T4.2 | Native bounded HTTP dependency-latency actuator | Independently reviewed within owned disposable Kind boundary |
 | T4.3 | Native signed-witness/evidence integration | Implemented slice; current handoff records actual review evidence |
-| T4.4 | Combined fault-execution adversarial hardening | Planned; mandatory T4.2 safety tests are not deferred |
-| T5.0 | Comprehensive Cloudflare security audit using the security-audit skill, operated by Codex | Planned for Stage 5; not installed or executed during T4.3 |
+| T4.4 | Combined fault-execution adversarial hardening | Implemented hardening slice; external handoff records actual adversarial tests and remaining limits |
+| T5.0 | Comprehensive Cloudflare security audit using the security-audit skill, operated by Codex | Planned for Stage 5; not installed or executed during T4.4 |
 | T5.1 | Remediate confirmed security findings and rerun regression/adversarial checks | Planned after the audit |
 | T5.2 | Release-readiness, stable APIs, CI and documentation | Planned after remediation |
 | T6 | Developer-preview release and broader integration | Planned |

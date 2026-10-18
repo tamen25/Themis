@@ -93,3 +93,6 @@ requirements in a record do not imply an existing execution component.
 | [T091](T091-native-witness-measurement-and-interruption.md) | Independent signed measurements, bounded sessions and interrupted prefixes |
 | [T092](T092-native-source-mapping-and-trust.md) | Explicit native evidence mapping and separate conservative findings |
 | [T093](T093-native-witness-trust-and-privilege.md) | Exact external scope, actor key separation and unchanged privilege boundary |
+| [T094](T094-native-finalization-and-cancellation.md) | Serialize original finalization with accepted cancellation |
+| [T095](T095-native-durable-attempt-and-file-identity.md) | Consume interrupted durable attempts and pin the actual journal writer |
+| [T096](T096-native-adversarial-review-evidence.md) | Preserve adversarial evidence and conservative verification semantics |

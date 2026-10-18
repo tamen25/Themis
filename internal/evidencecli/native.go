@@ -161,7 +161,15 @@ func nativeFinding(o evidence.Opened, path string, now time.Time) (obs.Finding, 
 	return evidencesource.CorroborateNative(o, policy, now), nil
 }
 func nativeExit(o evidence.Opened, f obs.Finding) int {
-	if o.Result.PublisherTrust != "TRUSTED" || f.WitnessTrust != "TRUSTED" || f.Status == "WITNESS_IDENTITY_UNTRUSTED" {
+	if o.Result.PublisherTrust != "TRUSTED" {
+		return 5
+	}
+	// An unknown mapping cannot evaluate a witness identity. Preserve the
+	// unsupported format disposition instead of calling that identity untrusted.
+	if o.Result.SourceChecks.Status == "UNSUPPORTED" || f.Status == "UNSUPPORTED_SOURCE" {
+		return 7
+	}
+	if f.WitnessTrust != "TRUSTED" || f.Status == "WITNESS_IDENTITY_UNTRUSTED" {
 		return 5
 	}
 	if f.Status == "WITNESS_SIGNATURE_INVALID" || f.Status == "OBSERVATIONS_CONTRADICTORY" {
@@ -169,9 +177,6 @@ func nativeExit(o evidence.Opened, f obs.Finding) int {
 	}
 	if o.Result.SourceChecks.Status == "FAILED" {
 		return 6
-	}
-	if o.Result.SourceChecks.Status == "UNSUPPORTED" || f.Status == "UNSUPPORTED_SOURCE" {
-		return 7
 	}
 	if o.Result.SourceChecks.Status != "PASSED" || f.Status != "OBSERVATIONS_CORROBORATED" {
 		return 8

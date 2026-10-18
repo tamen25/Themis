@@ -317,3 +317,14 @@ One monotonic runner clock bounds recovery; original-inventory cleanup and unsig
 offline provenance retain their earlier safety principles. See [protocol and
 limits](postgres-replication.md) and ADRs T071–T073. No controller, runner RBAC,
 Chaos Mesh actuator or generic database framework changes.
+
+### Native lifecycle adversarial hardening (T4.4)
+
+The native runner serializes finalization with accepted cancellation. The final
+proxy consumes interrupted durable attempts and pins the actual journal writer's
+file identity. No provider, source format or Kubernetes privilege is added.
+The [threat model and test map](native-adversarial-hardening.md) and
+[transition matrix](native-lifecycle-matrix.json) document crash, concurrency,
+expiry, identity, policy and storage behavior. ADRs T094-T096 record the narrow
+corrections. Public signed observations and candidate results remain separate
+from whole-execution trust, which stays INCONCLUSIVE.
