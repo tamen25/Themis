@@ -29,7 +29,7 @@ packet loss, network partition, pod disruption or production chaos.
 
 ## Prerequisites and owned environment
 
-Use Go 1.26.9+, Docker with Linux containers, kubectl, PowerShell 7 on Linux or
+Use Go 1.26.10+, Docker with Linux containers, kubectl, PowerShell 7 on Linux or
 Windows PowerShell, and Kind 0.32.0 installed in `.cache/tools/kind[.exe]`.
 The validated environment is Windows/WSL with Linux amd64 containers. Other
 platforms need their own runtime validation. Installation needs local Docker and

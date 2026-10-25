@@ -4,7 +4,7 @@ ifeq ($(OS),Windows_NT)
 GOBIN := bin/themis.exe
 endif
 
-.PHONY: build controller kube-runner chaosmesh-planner postgres-runner evidence fmt fmt-check vet test race fuzz check
+.PHONY: build controller kube-runner chaosmesh-planner postgres-runner evidence witness native-dependency native-witness fmt fmt-check vet test race fuzz check
 
 build:
 	$(GO) build -trimpath -o $(GOBIN) ./cmd/themis
@@ -24,6 +24,15 @@ postgres-runner:
 evidence:
 	$(GO) build -trimpath -o bin/ ./cmd/themis-evidence
 
+witness:
+	$(GO) build -trimpath -o bin/ ./cmd/themis-witness
+
+native-dependency:
+	$(GO) build -trimpath -o bin/ ./cmd/themis-dependency ./cmd/themis-dependency-fixture
+
+native-witness:
+	$(GO) build -trimpath -o bin/ ./cmd/themis-native-witness
+
 fmt:
 	$(GO) fmt ./...
 
@@ -35,10 +44,10 @@ vet:
 	$(GO) vet ./...
 
 test:
-	$(GO) test ./...
+	$(GO) test -count=1 ./...
 
 race:
-	$(GO) test -race ./...
+	$(GO) test -race -count=1 ./...
 
 fuzz:
 	$(GO) test ./internal/contract -run '^$$' -fuzz '^FuzzParse$$' -fuzztime 10s
@@ -56,5 +65,11 @@ fuzz:
 	$(GO) test ./pkg/evidence -run '^$$' -fuzz '^FuzzManifest$$' -fuzztime 10s
 	$(GO) test ./pkg/evidence -run '^$$' -fuzz '^FuzzArchive$$' -fuzztime 10s
 	$(GO) test ./pkg/evidence -run '^$$' -fuzz '^FuzzSignature$$' -fuzztime 10s
+	$(GO) test ./pkg/liveobservation -run '^$$' -fuzz '^FuzzSignedObservationJournal$$' -fuzztime 10s
+	$(GO) test ./pkg/liveobservation -run '^$$' -fuzz '^FuzzWitnessPolicy$$' -fuzztime 10s
+	$(GO) test ./internal/dependencyhttp -run '^$$' -fuzz '^FuzzNativeGrant$$' -fuzztime 10s
+	$(GO) test ./internal/dependencyexperiment -run '^$$' -fuzz '^FuzzNativeReportNeverGrantsTrustedExecution$$' -fuzztime 10s
+	$(GO) test ./pkg/nativeobservation -run '^$$' -fuzz '^FuzzNativeSignedJournal$$' -fuzztime 10s
+	$(GO) test ./pkg/nativeobservation -run '^$$' -fuzz '^FuzzNativeWitnessPolicy$$' -fuzztime 10s
 
-check: fmt-check vet test build controller kube-runner evidence
+check: fmt-check vet test build controller kube-runner chaosmesh-planner postgres-runner evidence witness native-dependency native-witness

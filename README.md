@@ -1,5 +1,25 @@
 # Themis
 
+The [developer-preview candidate guide](docs/developer-preview.md) covers platform
+qualification, attributable two-build packaging, external trust and remaining
+release gates. This is not production support or an independently attested run.
+
+T4.2 adds one [native bounded HTTP dependency experiment](docs/native-dependency.md):
+a real application calls a fixed proxy and separate synthetic dependency. The
+proxy enforces exact boot/target approval, once-only application and independent
+monotonic expiry. Separate actual probing establishes effect, application outcome
+and recovery; cleanup uncertainty remains visible. Scope is disposable owned Kind.
+T4.3 adds a [separate signed native workflow](docs/native-witness.md);
+the original T4.2 collection remains unsigned. Chaos Mesh remains disabled.
+See the [tracked roadmap](docs/roadmap.md).
+
+T4.1 adds [independently signed live application observations](docs/live-observation.md)
+for the owned synthetic Kind experiment. A separate process/key and Kubernetes
+principal measure their own nonce-bound HTTP traffic. External witness trust and
+observation corroboration are separate from publisher trust, the original verdict
+and unresolved whole-execution attestation. No new fault or controller privilege
+is introduced; same-host administrator and clock limitations remain explicit.
+
 T4.0 adds [signed evidence bundles and independent offline verification](docs/evidence-bundles.md).
 Build `go build -o bin/ ./cmd/themis-evidence`. Explicit publication uses a
 separate protected signer; verification requires an external publisher trust
@@ -44,7 +64,7 @@ demonstrations, authorization boundaries and evidence limitations.
 
 ## Build and use
 
-Requires Go 1.26.9 or newer. The local CLI needs no cluster, cloud account,
+Requires Go 1.26.10 or newer. The local CLI needs no cluster, cloud account,
 database, Docker, Argus or Arete. The first build downloads the pinned Go modules; Go's automatic
 toolchain selection may also download the required Go patch release.
 
@@ -309,3 +329,11 @@ primary fencing, timeline/write-readiness checks and exact acknowledged loss.
 Time objectives use conservative uncertainty bounds. Cleanup survives runner death
 without rewriting history. This remains a disposable local synthetic experiment;
 automated HA, existing databases and whole-run attestation are excluded.
+## Native signed evidence (T4.3)
+
+The [native witness workflow](docs/native-witness.md) adds a dedicated read-only
+process signing its own real dependency/application measurements, exact approval
+and actuator correlation, explicit external trust and one offline evidence mapping.
+Source candidate, witness corroboration and cleanup remain separate; whole trusted
+execution remains INCONCLUSIVE. Scope is newly owned disposable synthetic Kind.
+See the [reviewed roadmap](docs/roadmap.md) for T4.4 and the Stage 5 audit sequence.

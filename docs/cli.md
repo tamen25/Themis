@@ -1,5 +1,20 @@
 # CLI reference
 
+For T4.3's integrated native approval, signed witness and offline evidence commands,
+see [native witness operation](native-witness.md). Old command outputs stay separate.
+
+The separate `themis-dependency` binary provides `init`, `bind`, `plan`, `approve`,
+`observe`, `run`, `inspect`, `cancel`, `reconcile` and offline `replay` for one newly
+owned native HTTP dependency path. Approval of the exact plan and an autonomous
+observer precede execution; no VerificationRun creates a fault. See
+[commands, exit codes and limits](native-dependency.md). The native protocol cannot
+reuse old fixture/Chaos Mesh grants and has no T4.1 bundle mapping in this slice.
+
+For the separate `themis-witness` commands and the additive evidence
+`--witness-session` / `--witness-policy` flags, see
+[live observation](live-observation.md). Those flags add exact-scope observation
+corroboration; they do not change existing execution or historical verdict commands.
+
 `themis-evidence` is the separate publication/offline verifier binary. Its
 commands, stable JSON, external trust policy and exit codes are specified in
 [signed evidence bundles](evidence-bundles.md). Verification authenticates artifact
@@ -117,3 +132,13 @@ identities, receipts and named target. Neither approval prints its private grant
 Exit codes remain 0 PASS, 3 FAIL, 4 INCONCLUSIVE, 7 CLEANUP_PENDING, 2 request or
 admission error. Offline replay always exits 4. See [commands and measured
 recovery protocol](postgres-pitr.md) before approving source SIGKILL.
+## Native signed-witness integration
+
+Use `themis-dependency approve-witnessed` and `run-witnessed` only with the exact
+reviewed native digest, a separately running original observer and a registered,
+ready signed witness. `themis-native-witness keygen/register/observe/inspect` has
+no fault mutation command. Its state is the dedicated installer-created witness
+principal. `themis-evidence export/bundle/verify` supports the explicit
+`native-dependency-witness` mapping and separately supplied `--witness-policy`.
+Verification 0 can corroborate a source FAIL; whole execution stays INCONCLUSIVE.
+See [complete commands, exits and trust requirements](native-witness.md).

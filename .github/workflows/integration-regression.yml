@@ -1,0 +1,205 @@
+name: Owned integration regression
+
+# A maintainer explicitly requests fresh disposable infrastructure at a reviewed
+# commit. No release, production context or environment secret is used.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  GOENV: 'off'
+  GOWORK: 'off'
+  GOTOOLCHAIN: local
+  GOFLAGS: -mod=readonly
+  DOCKER_HOST: unix:///var/run/docker.sock
+  DOCKER_CONTEXT: ''
+
+jobs:
+  kubernetes:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        kind: [synthetic-lifecycle, synthetic-witness, native-witness, native-adapter]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e
+        with:
+          go-version-file: go.mod
+          cache: false
+      - name: Install pinned Kind and build every CLI
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force .cache/tools,bin,execution-evidence/integration | Out-Null
+          $env:GOBIN = (Resolve-Path .cache/tools).Path
+          go install sigs.k8s.io/kind@v0.32.0
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          go build -trimpath -o bin/ ./cmd/...
+          exit $LASTEXITCODE
+      - name: Create fresh installer-owned cluster
+        shell: pwsh
+        env:
+          INTEGRATION_KIND: ${{ matrix.kind }}
+        run: |
+          $prefix = if ($env:INTEGRATION_KIND -in @('native-witness', 'native-adapter')) { 'themis-t42-' } else { 'themis-t41-' }
+          $name = $prefix + [guid]::NewGuid().ToString('N').Substring(0,12)
+          "THEMIS_REVIEW_CLUSTER=$name" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          docker ps -a --no-trunc --format '{{json .ID}} {{json .Names}} {{json .Status}}' > execution-evidence/integration/before-containers.txt
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          docker volume ls --format '{{json .Name}} {{json .Driver}} {{json .Scope}}' > execution-evidence/integration/before-volumes.txt
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          docker network ls --no-trunc --format '{{json .ID}} {{json .Name}} {{json .Driver}} {{json .Scope}}' > execution-evidence/integration/before-networks.txt
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $script = switch ($env:INTEGRATION_KIND) {
+            'synthetic-lifecycle' { 'scripts/kind-experiment.ps1' }
+            'synthetic-witness' { 'scripts/kind-witness.ps1' }
+            'native-witness' { 'scripts/kind-native-witness.ps1' }
+            'native-adapter' { 'scripts/kind-dependency.ps1' }
+          }
+          & $script -Action up -ClusterName $name
+      - name: Exercise original synthetic lifecycle and coordination
+        if: matrix.kind == 'synthetic-lifecycle'
+        shell: pwsh
+        run: |
+          ./scripts/kind-experiment.ps1 -Action test-lifecycle -ClusterName $env:THEMIS_REVIEW_CLUSTER
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          ./scripts/kind-experiment.ps1 -Action test-coordination -ClusterName $env:THEMIS_REVIEW_CLUSTER
+          exit $LASTEXITCODE
+      - name: Exercise signed witness and native regressions
+        if: matrix.kind != 'synthetic-lifecycle'
+        shell: pwsh
+        env:
+          INTEGRATION_KIND: ${{ matrix.kind }}
+        run: |
+          $state = Join-Path $PWD ('.themis/' + $env:THEMIS_REVIEW_CLUSTER)
+          $bins = (Resolve-Path bin).Path
+          if ($env:INTEGRATION_KIND -eq 'synthetic-witness') {
+            $env:THEMIS_LIVE_WITNESS='1'
+            $env:THEMIS_WITNESS_RUNNER_STATE=$state
+            $env:THEMIS_WITNESS_STATE=Join-Path $PWD ('.themis/witness-' + $env:THEMIS_REVIEW_CLUSTER)
+            $env:THEMIS_WITNESS_RUNNER_BINARY=Join-Path $bins 'themis-kube'
+            $env:THEMIS_WITNESS_BINARY=Join-Path $bins 'themis-witness'
+            $env:THEMIS_WITNESS_EVIDENCE_BINARY=Join-Path $bins 'themis-evidence'
+            $env:THEMIS_WITNESS_EVIDENCE=Join-Path $PWD 'execution-evidence/integration/witness-public'
+            python scripts/ci-command.py --name signed-witness --output execution-evidence/integration -- go test -count=1 -json -timeout=15m ./test/liveobservation
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          } elseif ($env:INTEGRATION_KIND -eq 'native-witness') {
+            $env:THEMIS_NATIVE_WITNESS='1'
+            $env:THEMIS_NATIVE_WITNESS_STATE=$state
+            $env:THEMIS_NATIVE_WITNESS_BIN=$bins
+            $env:THEMIS_NATIVE_WITNESS_EVIDENCE=Join-Path $PWD 'execution-evidence/integration/native-public'
+            python scripts/ci-command.py --name native-witness --output execution-evidence/integration -- go test -count=1 -json -timeout=20m ./test/nativewitness
+            exit $LASTEXITCODE
+          } else {
+            $env:THEMIS_NATIVE_DEPENDENCY='1'
+            $env:THEMIS_NATIVE_DEPENDENCY_STATE=$state
+            $env:THEMIS_NATIVE_DEPENDENCY_BINARY=Join-Path $bins 'themis-dependency'
+            $env:THEMIS_NATIVE_DEPENDENCY_EVIDENCE=Join-Path $PWD 'execution-evidence/integration/dependency-public'
+            python scripts/ci-command.py --name native-adapter --output execution-evidence/integration -- go test -count=1 -json -timeout=15m ./test/nativedependency
+            exit $LASTEXITCODE
+          }
+      - name: Delete only the original UID-verified cluster
+        if: always() && env.THEMIS_REVIEW_CLUSTER != ''
+        shell: pwsh
+        env:
+          INTEGRATION_KIND: ${{ matrix.kind }}
+        run: |
+          $script = switch ($env:INTEGRATION_KIND) {
+            'synthetic-lifecycle' { 'scripts/kind-experiment.ps1' }
+            'synthetic-witness' { 'scripts/kind-witness.ps1' }
+            'native-witness' { 'scripts/kind-native-witness.ps1' }
+            'native-adapter' { 'scripts/kind-dependency.ps1' }
+          }
+          & $script -Action down -ClusterName $env:THEMIS_REVIEW_CLUSTER
+          $teardownExit=$LASTEXITCODE
+          docker ps -a --no-trunc --format '{{json .ID}} {{json .Names}} {{json .Status}}' > execution-evidence/integration/after-containers.txt
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          docker volume ls --format '{{json .Name}} {{json .Driver}} {{json .Scope}}' > execution-evidence/integration/after-volumes.txt
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          docker network ls --no-trunc --format '{{json .ID}} {{json .Name}} {{json .Driver}} {{json .Scope}}' > execution-evidence/integration/after-networks.txt
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          exit $teardownExit
+      - name: Retain public integration results
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: integration-${{ matrix.kind }}-${{ github.run_attempt }}
+          path: execution-evidence/integration/
+          retention-days: 7
+          if-no-files-found: ignore
+          include-hidden-files: false
+
+  postgres:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        family: [Postgres, Durable, PITR, Replication]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e
+        with:
+          go-version-file: go.mod
+          cache: false
+      - name: Run owned PostgreSQL recovery regression
+        shell: pwsh
+        env:
+          POSTGRES_TEST_FAMILY: ${{ matrix.family }}
+        run: |
+          New-Item -ItemType Directory -Force execution-evidence/postgres | Out-Null
+          $env:THEMIS_POSTGRES_DOCKER='1'
+          $env:THEMIS_POSTGRES_ENDPOINT='unix:///var/run/docker.sock'
+          $env:DOCKER_HOST=$env:THEMIS_POSTGRES_ENDPOINT
+          $env:DOCKER_CONTEXT=''
+          $env:DOCKER_CONFIG=Join-Path $env:RUNNER_TEMP ('themis-docker-' + [guid]::NewGuid().ToString('N'))
+          New-Item -ItemType Directory $env:DOCKER_CONFIG | Out-Null
+          [IO.File]::WriteAllText((Join-Path $env:DOCKER_CONFIG 'config.json'), '{}')
+          $env:THEMIS_POSTGRES_ENGINE=(docker --host $env:THEMIS_POSTGRES_ENDPOINT info --format '{{.ID}}')
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $env:THEMIS_POSTGRES_TEST_STATE=Join-Path $env:RUNNER_TEMP ('themis-postgres-' + [guid]::NewGuid().ToString('N'))
+          $env:THEMIS_POSTGRES_EVIDENCE=Join-Path $PWD 'execution-evidence/postgres/public'
+          docker ps -a --no-trunc --format '{{json .ID}} {{json .Names}} {{json .Status}}' > execution-evidence/postgres/before-containers.txt
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          docker volume ls --format '{{json .Name}} {{json .Driver}} {{json .Scope}}' > execution-evidence/postgres/before-volumes.txt
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          docker network ls --no-trunc --format '{{json .ID}} {{json .Name}} {{json .Driver}} {{json .Scope}}' > execution-evidence/postgres/before-networks.txt
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          docker pull docker.io/library/postgres:18.6-bookworm@sha256:afc7e2d441324c0388fa80c3d24f733b4194a4eb7f47dd8ee2b08eb1a24a647c
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $cleanupBinary=Join-Path $env:RUNNER_TEMP ('themis-postgres-' + [guid]::NewGuid().ToString('N'))
+          python scripts/ci-command.py --name cleanup-build --output execution-evidence/postgres -- go build -trimpath -o $cleanupBinary ./cmd/themis-postgres
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $testExit=1
+          $cleanupExit=7
+          try {
+            python scripts/ci-command.py --name postgres --output execution-evidence/postgres -- go test -count=1 -json -timeout=30m -run ("^TestReal" + $env:POSTGRES_TEST_FAMILY) ./internal/postgres
+            $testExit=$LASTEXITCODE
+          } finally {
+            python scripts/ci-command.py --name cleanup --output execution-evidence/postgres -- python scripts/verify-postgres-cleanup.py --family $env:POSTGRES_TEST_FAMILY --state-root $env:THEMIS_POSTGRES_TEST_STATE --endpoint $env:THEMIS_POSTGRES_ENDPOINT --engine $env:THEMIS_POSTGRES_ENGINE --binary $cleanupBinary --output execution-evidence/postgres/cleanup-proof.json
+            $cleanupExit=$LASTEXITCODE
+            docker ps -a --no-trunc --format '{{json .ID}} {{json .Names}} {{json .Status}}' > execution-evidence/postgres/after-containers.txt
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+            docker volume ls --format '{{json .Name}} {{json .Driver}} {{json .Scope}}' > execution-evidence/postgres/after-volumes.txt
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+            docker network ls --no-trunc --format '{{json .ID}} {{json .Name}} {{json .Driver}} {{json .Scope}}' > execution-evidence/postgres/after-networks.txt
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          }
+          if ($testExit -ne 0) { exit $testExit }
+          exit $cleanupExit
+      - name: Retain public recovery results
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: integration-postgres-${{ matrix.family }}-${{ github.run_attempt }}
+          path: execution-evidence/postgres/
+          retention-days: 7
+          if-no-files-found: ignore
+          include-hidden-files: false

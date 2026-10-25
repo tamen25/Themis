@@ -1,0 +1,55 @@
+# Installed only in a new owned T4.1 Kind. Named reads plus one exact-Pod
+# forwarding transport; no runner, controller or workload mutation permissions.
+apiVersion: v1
+kind: ServiceAccount
+metadata: {name: themis-witness, namespace: themis-test}
+automountServiceAccountToken: false
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata: {name: themis-witness, namespace: themis-test}
+rules:
+  - apiGroups: [verification.themis.dev]
+    resources: [verificationruns]
+    resourceNames: [latency-request]
+    verbs: [get]
+  - apiGroups: [apps]
+    resources: [deployments]
+    resourceNames: [latency-fixture]
+    verbs: [get]
+  - apiGroups: [apps]
+    resources: [replicasets]
+    resourceNames: [REPLACE_WITH_REPLICA_SET_NAME]
+    verbs: [get]
+  - apiGroups: ['']
+    resources: [pods]
+    resourceNames: [REPLACE_WITH_POD_NAME]
+    verbs: [get]
+  - apiGroups: ['']
+    resources: [pods/portforward]
+    resourceNames: [REPLACE_WITH_POD_NAME]
+    verbs: [create]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata: {name: themis-witness, namespace: themis-test}
+subjects: [{kind: ServiceAccount, name: themis-witness, namespace: themis-test}]
+roleRef: {apiGroup: rbac.authorization.k8s.io, kind: Role, name: themis-witness}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata: {name: themis-t41-witness-identity}
+rules:
+  - apiGroups: ['']
+    resources: [namespaces]
+    resourceNames: [kube-system, themis-test]
+    verbs: [get]
+  - apiGroups: [authentication.k8s.io]
+    resources: [selfsubjectreviews]
+    verbs: [create]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata: {name: themis-t41-witness-identity}
+subjects: [{kind: ServiceAccount, name: themis-witness, namespace: themis-test}]
+roleRef: {apiGroup: rbac.authorization.k8s.io, kind: ClusterRole, name: themis-t41-witness-identity}

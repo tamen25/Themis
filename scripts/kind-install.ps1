@@ -1,5 +1,6 @@
 param([string]$CommandProxy='')
 . (Join-Path $PSScriptRoot 'kind-common.ps1') -CommandProxy $CommandProxy
+. (Join-Path $PSScriptRoot 'kind-quota.ps1')
 $owner=Assert-ThemisCluster
 Push-Location -LiteralPath $script:ThemisRepository
 try {
@@ -11,6 +12,7 @@ try {
     Invoke-ThemisKubectl @('apply','-f','config/kubernetes/admission.yaml')
     Invoke-ThemisKubectl @('apply','-f','config/kubernetes/quota.yaml')
     Invoke-ThemisKubectl @('wait','--for=jsonpath={.status.hard.pods}=8','resourcequota/themis-test-budget','-n','themis-test','--timeout=60s')
+    Wait-ThemisVerificationQuota
     Invoke-ThemisKubectl @('apply','-f','config/kubernetes/rbac.yaml')
     $owner|Add-Member -Force -NotePropertyName namespaceUID -NotePropertyValue (Invoke-ThemisKubectl @('get','namespace','themis-test','-o','jsonpath={.metadata.uid}'))
     $encoding=[Text.UTF8Encoding]::new($false)

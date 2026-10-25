@@ -1,0 +1,84 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:themis:native-witness-verification:v1alpha1",
+  "title": "Separate native artifact, publisher, witness, effect, recovery and execution findings",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "evidence", "nativeObservationCorroboration"],
+  "properties": {
+    "version": {"const": "themis.native-witness-bundle-verification/v1alpha1"},
+    "evidence": {
+      "type": "object",
+      "required": ["executionAttestation", "trustedExecutionVerdict", "source", "sourceChecks", "publisherTrust", "signature", "artifactIntegrity"],
+      "properties": {
+        "executionAttestation": {"const": "NOT_INDEPENDENTLY_ATTESTED"},
+        "trustedExecutionVerdict": {"const": "INCONCLUSIVE"},
+        "source": {"$ref": "urn:themis:evidence-bundle:v1alpha1#/$defs/source"},
+        "sourceChecks": {"type": "object"},
+        "publisherTrust": {"enum": ["TRUSTED", "UNTRUSTED"]},
+        "signature": {"type": "string"},
+        "artifactIntegrity": {"enum": ["VALID", "INVALID"]}
+      }
+    },
+    "nativeObservationCorroboration": {"$ref": "#/$defs/finding"}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"nativeObservationCorroboration": {"properties": {"status": {"const": "OBSERVATIONS_CORROBORATED"}}}}},
+      "then": {"properties": {
+        "nativeObservationCorroboration": {"properties": {
+          "witnessTrust": {"const": "TRUSTED"}, "signatureChain": {"const": "VALID"},
+          "runnerCorrelation": {"const": "MATCHED"}, "identityCorrelation": {"const": "MATCHED"},
+          "authorityCorrelation": {"const": "MATCHED"}, "complete": {"const": true},
+          "effectCorroboration": {"const": "CORROBORATED"},
+          "baselineSamples": {"minimum": 3}, "activeSamples": {"minimum": 3},
+          "effectSamples": {"minimum": 3}, "signedControlReceipts": {"minimum": 1}
+        }},
+        "evidence": {"properties": {
+          "source": {"properties": {"cleanup": {"const": "COMPLETE"}, "execution": {"const": "SUCCEEDED"}}},
+          "sourceChecks": {"properties": {"status": {"const": "PASSED"}}}
+        }}
+      }}
+    },
+    {
+      "if": {"properties": {"nativeObservationCorroboration": {"properties": {"candidateApplicationVerdict": {"const": "PASS"}}}}},
+      "then": {"properties": {"nativeObservationCorroboration": {"properties": {
+        "complete": {"const": true}, "recoverySamples": {"minimum": 3},
+        "baselineSamples": {"minimum": 3}, "activeSamples": {"minimum": 3}, "effectSamples": {"minimum": 3},
+        "signedControlReceipts": {"minimum": 1}, "violations": {"const": 0},
+        "actuatorState": {"enum": ["ORIGINAL_INVOCATION_INACTIVE_OBSERVED", "ORIGINAL_INVOCATION_EXPIRY_OBSERVED"]}
+      }}}}
+    }
+  ],
+  "$defs": {
+    "count": {"type": "integer", "minimum": 0, "maximum": 64},
+    "finding": {
+      "type": "object", "additionalProperties": false,
+      "required": ["version", "status", "signatureChain", "witnessTrust", "identityCorrelation", "runnerCorrelation", "effectCorroboration", "recoveryCorroboration", "actuatorState", "authorityCorrelation", "signedControlReceipts", "expiryReceipts", "complete", "baselineSamples", "activeSamples", "effectSamples", "recoverySamples", "violations", "maxApplicationMS", "candidateApplicationVerdict", "originalCandidateVerdict", "originalCleanup", "executionAttestation", "trustedExecutionVerdict", "problems", "limitations"],
+      "properties": {
+        "version": {"const": "themis.native-observation/v1alpha1"},
+        "status": {"enum": ["OBSERVATIONS_CORROBORATED", "OBSERVATIONS_INCOMPLETE", "OBSERVATIONS_CONTRADICTORY", "WITNESS_IDENTITY_UNTRUSTED", "WITNESS_SIGNATURE_INVALID", "UNSUPPORTED_SOURCE"]},
+        "signatureChain": {"enum": ["NOT_CHECKED", "VALID", "INVALID"]},
+        "witnessTrust": {"enum": ["TRUSTED", "UNTRUSTED"]},
+        "identityCorrelation": {"enum": ["NOT_CHECKED", "MATCHED", "UNCERTAIN"]},
+        "runnerCorrelation": {"enum": ["NOT_CHECKED", "MATCHED", "INVALID", "INCOMPLETE"]},
+        "authorityCorrelation": {"enum": ["NOT_CHECKED", "NOT_OBSERVED", "MATCHED"]},
+        "effectCorroboration": {"enum": ["NOT_CORROBORATED", "CORROBORATED", "UNTRUSTED_OBSERVATIONS"]},
+        "recoveryCorroboration": {"enum": ["NOT_CORROBORATED", "CORROBORATED", "UNTRUSTED_OBSERVATIONS"]},
+        "actuatorState": {"enum": ["UNKNOWN", "ORIGINAL_INVOCATION_INACTIVE_OBSERVED", "ORIGINAL_INVOCATION_EXPIRY_OBSERVED"]},
+        "signedControlReceipts": {"$ref": "#/$defs/count"}, "expiryReceipts": {"$ref": "#/$defs/count"},
+        "complete": {"type": "boolean"},
+        "baselineSamples": {"$ref": "#/$defs/count"}, "activeSamples": {"$ref": "#/$defs/count"},
+        "effectSamples": {"$ref": "#/$defs/count"}, "recoverySamples": {"$ref": "#/$defs/count"}, "violations": {"$ref": "#/$defs/count"},
+        "maxApplicationMS": {"type": "number", "minimum": 0, "maximum": 1000},
+        "candidateApplicationVerdict": {"enum": ["PASS", "FAIL", "INCONCLUSIVE"]},
+        "originalCandidateVerdict": {"enum": ["PASS", "FAIL", "INCONCLUSIVE"]},
+        "originalCleanup": {"enum": ["UNKNOWN", "PENDING", "COMPLETE"]},
+        "executionAttestation": {"const": "NOT_INDEPENDENTLY_ATTESTED"},
+        "trustedExecutionVerdict": {"const": "INCONCLUSIVE"},
+        "problems": {"type": "array", "maxItems": 256, "items": {"type": "string"}},
+        "limitations": {"type": "array", "minItems": 4, "maxItems": 16, "items": {"type": "string"}}
+      }
+    }
+  }
+}

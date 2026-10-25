@@ -64,14 +64,30 @@ func TestExternalCLICancellation(t *testing.T) {
 			done := make(chan error, 1)
 			go func() { done <- cmd.Wait() }()
 			var directory string
-			waitFor(t, func() bool {
+			timeout := time.NewTimer(5 * time.Second)
+			defer timeout.Stop()
+			poll := time.NewTicker(10 * time.Millisecond)
+			defer poll.Stop()
+			var last State
+		waitPhase:
+			for {
 				dirs, _ := filepath.Glob(filepath.Join(root, "runs", "run-*"))
-				if len(dirs) != 1 {
-					return false
+				if len(dirs) == 1 {
+					directory = dirs[0]
+					last = inspectJournalFile(filepath.Join(directory, "events.jsonl")).LastState
+					if last == phase {
+						break waitPhase
+					}
 				}
-				directory = dirs[0]
-				return inspectJournalFile(filepath.Join(directory, "events.jsonl")).LastState == phase
-			})
+				select {
+				case err := <-done:
+					// Wait completed, so the output buffers have a single reader.
+					t.Fatalf("runner exited before %s; last=%s exit=%v stdout=%s stderr=%s", phase, last, err, stdout.String(), stderr.String())
+				case <-timeout.C:
+					t.Fatalf("runner did not reach %s within 5s; last=%s", phase, last)
+				case <-poll.C:
+				}
+			}
 			inspection := invokeCLI("experiment", "status", "--run", directory, "--output", "json")
 			if inspection.code != 0 {
 				t.Fatalf("active status: %s %s", inspection.stdout, inspection.stderr)
@@ -188,7 +204,7 @@ func TestStatusAndCancelAfterCompletion(t *testing.T) {
 	_, p, a, root := setup(t, "healthy")
 	r, directory, err := Execute(context.Background(), p, a, cDirectory(root), filepath.Join(root, "runs"))
 	if err != nil || r.Verdict != result.Pass {
-		t.Fatalf("initial experiment: %v %s", err, r.Verdict)
+		t.Fatalf("initial healthy experiment: error=%v report=%+v", err, r)
 	}
 	before := fileHashes(t, directory)
 	for range 3 {

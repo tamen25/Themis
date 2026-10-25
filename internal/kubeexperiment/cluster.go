@@ -12,6 +12,7 @@ import (
 	"net/url"
 	"path/filepath"
 	"reflect"
+	"regexp"
 	"sync"
 	"time"
 
@@ -63,7 +64,9 @@ func openCluster(ctx context.Context, stateDirectory string, check bool) (*Clust
 	if err := localstate.Read(filepath.Join(stateDirectory, "execution-owner.json"), &owner); err != nil {
 		return nil, err
 	}
-	if owner.Version != "themis.kind-ownership/t2.1-v1" || owner.ClusterName != "themis-t21" || owner.Context != "kind-themis-t21" || owner.Operator.Name != kubefault.OperatorName || owner.ClusterUID == "" || owner.NamespaceUID == "" || owner.DeploymentUID == "" || owner.FixtureImageID == "" {
+	legacyOwner := owner.Version == "themis.kind-ownership/t2.1-v1" && owner.ClusterName == "themis-t21" && owner.Context == "kind-themis-t21"
+	witnessOwner := owner.Version == "themis.kind-ownership/t4.1-v1" && regexp.MustCompile(`^themis-t41-[a-f0-9]{12}$`).MatchString(owner.ClusterName) && owner.Context == "kind-"+owner.ClusterName
+	if (!legacyOwner && !witnessOwner) || owner.Operator.Name != kubefault.OperatorName || owner.ClusterUID == "" || owner.NamespaceUID == "" || owner.DeploymentUID == "" || owner.FixtureImageID == "" {
 		return nil, kubefault.ErrDenied
 	}
 	path := filepath.Join(stateDirectory, "operator-kubeconfig")

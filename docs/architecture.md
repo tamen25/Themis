@@ -1,5 +1,48 @@
 # Architecture
 
+## Native signed observation integration (T4.3)
+
+`pkg/nativeobservation` is a separate versioned public registration, signature,
+chain, scope and bounded-predicate protocol. `internal/nativewitness` and
+`cmd/themis-native-witness` collect their own actual HTTP measurements through a
+dedicated named read-only Kubernetes principal. `internal/nativeexecution` links
+public approval and signed pre-Apply readiness to the original runner's signed
+Apply nonce. A separate read-only proxy receipt authenticates retained grant/key
+commitments and current original-invocation state without changing the actuator.
+
+One explicit `native-dependency-witness/v1` source mapping and additive
+`pkg/evidenceverify.VerifyNative` expose original source candidate, independent
+corroboration, cleanup and unresolved execution trust. T4.0 envelope and old source
+outputs remain unchanged. No provider registry or new controller execution path
+exists. See [protocol and limits](native-witness.md).
+
+## Native dependency execution (T4.2)
+
+`internal/dependencyhttp` and `cmd/themis-dependency-fixture` implement the three
+concrete application/proxy/dependency roles and separate native authority domains.
+`internal/dependencyexperiment` and `cmd/themis-dependency` independently resolve
+Kubernetes identity, approve frozen plans, claim/journal once, observe actual HTTP,
+evaluate measurements and reconcile original cleanup. The proxy owns its monotonic
+expiry and boot-bound authorization. The observer never receives fault authority.
+Existing controller, T4.1 witness, evidence mappings and historical engines remain
+unchanged. See [protocol and limitations](native-dependency.md), ADRs T084-T089
+and the [roadmap](roadmap.md). Full signed native integration belongs to T4.3.
+
+## Live observation boundary (T4.1)
+
+`cmd/themis-witness` and `internal/livewitness` implement one separate observer
+process for the existing owned Kind fixture. `pkg/liveobservation` contains the
+bounded signing/chain/trust protocol without infrastructure clients. The witness
+independently resolves the exact target using dedicated credentials and measures
+its own paired HTTP requests. It never receives grants or cleanup capabilities.
+The existing runner keeps its evaluator, journal format and independent cleanup.
+
+A concrete new source mapping joins original runner evidence to signed observer
+records. `pkg/evidenceverify.VerifyObserved` adds external witness policy and a
+separate corroboration result; old `Verify` output stays unchanged for old sources.
+The standard-library T4.0 archive core and existing RBAC remain unchanged. See
+[protocol, limits and operation](live-observation.md) and ADRs T079-T083.
+
 ## Retrospective evidence publication (T4.0)
 
 `pkg/evidence` is a standalone standard-library archive/signature/trust package.
@@ -94,9 +137,9 @@ library. No POSIX-mode-only confidentiality claim is made on Windows.
 
 These libraries avoid an incomplete hand-written YAML or schema engine. The
 schema is embedded and compilation uses a loader that rejects external resources.
-Go 1.26.9 is the minimum after the new HTTP call graph exposed standard-library
-advisories in the previous 1.26.8 toolchain. CI selects the latest
-available 1.26 patch.
+Go 1.26.10 is the minimum after the urgent crypto/x509 fix in GO-2026-6809.
+The previous HTTP audit raised the minimum from 1.26.8 to 1.26.9. CI selects the
+exact patch from go.mod.
 There is no CLI framework, database, Kubernetes/cloud SDK, provider client or
 observability dependency. Diagnostics use escaped terminal errors; run events
 are structured JSON records.
@@ -274,3 +317,14 @@ One monotonic runner clock bounds recovery; original-inventory cleanup and unsig
 offline provenance retain their earlier safety principles. See [protocol and
 limits](postgres-replication.md) and ADRs T071–T073. No controller, runner RBAC,
 Chaos Mesh actuator or generic database framework changes.
+
+### Native lifecycle adversarial hardening (T4.4)
+
+The native runner serializes finalization with accepted cancellation. The final
+proxy consumes interrupted durable attempts and pins the actual journal writer's
+file identity. No provider, source format or Kubernetes privilege is added.
+The [threat model and test map](native-adversarial-hardening.md) and
+[transition matrix](native-lifecycle-matrix.json) document crash, concurrency,
+expiry, identity, policy and storage behavior. ADRs T094-T096 record the narrow
+corrections. Public signed observations and candidate results remain separate
+from whole-execution trust, which stays INCONCLUSIVE.

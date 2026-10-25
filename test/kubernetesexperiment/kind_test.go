@@ -287,7 +287,7 @@ func (h *harness) runnerDeath() {
 	if goruntime.GOOS != "windows" {
 		program = "pwsh"
 	}
-	restartArgs := []string{"-NoProfile", "-ExecutionPolicy", "Bypass", "-File", filepath.Join(h.repository, "scripts/kind-experiment.ps1"), "-Action", "restart-controller"}
+	restartArgs := []string{"-NoProfile", "-ExecutionPolicy", "Bypass", "-File", filepath.Join(h.repository, "scripts/kind-experiment.ps1"), "-Action", "restart-controller", "-ClusterName", h.cluster.Owner.ClusterName}
 	if proxy := os.Getenv("THEMIS_TEST_COMMAND_PROXY"); proxy != "" {
 		restartArgs = append(restartArgs, "-CommandProxy", proxy)
 	}
@@ -426,7 +426,7 @@ func (h *harness) negatives() {
 func (h *harness) checkRBAC() {
 	t := h.t
 	t.Helper()
-	config, err := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(&clientcmd.ClientConfigLoadingRules{ExplicitPath: filepath.Join(h.state, "admin-kubeconfig")}, &clientcmd.ConfigOverrides{CurrentContext: "kind-themis-t21"}).ClientConfig()
+	config, err := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(&clientcmd.ClientConfigLoadingRules{ExplicitPath: filepath.Join(h.state, "admin-kubeconfig")}, &clientcmd.ConfigOverrides{CurrentContext: h.cluster.Owner.Context}).ClientConfig()
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:themis:witness-verification:v1alpha1",
+  "title": "Separate publisher, observation corroboration and unresolved execution trust",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "evidence", "observationCorroboration"],
+  "properties": {
+    "version": {"const": "themis.witness-bundle-verification/v1alpha1"},
+    "evidence": {
+      "type": "object",
+      "required": ["executionAttestation", "trustedExecutionVerdict", "source", "sourceChecks", "publisherTrust", "signature"],
+      "properties": {
+        "executionAttestation": {"const": "NOT_INDEPENDENTLY_ATTESTED"},
+        "trustedExecutionVerdict": {"const": "INCONCLUSIVE"},
+        "source": {"$ref": "urn:themis:evidence-bundle:v1alpha1#/$defs/source"},
+        "sourceChecks": {"type": "object"},
+        "publisherTrust": {"enum": ["TRUSTED", "UNTRUSTED"]},
+        "signature": {"type": "string"}
+      }
+    },
+    "observationCorroboration": {"$ref": "#/$defs/finding"}
+  },
+  "allOf": [{
+    "if": {"properties": {"observationCorroboration": {"properties": {"status": {"const": "OBSERVED_AND_CORRELATED"}}}}},
+    "then": {"properties": {
+      "observationCorroboration": {"properties": {
+        "witnessTrust": {"const": "TRUSTED"}, "signatureChain": {"const": "VALID"},
+        "runnerCorrelation": {"const": "VALID"}, "complete": {"const": true},
+        "baselineSamples": {"minimum": 3}, "interventionSamples": {"minimum": 3},
+        "recoverySamples": {"minimum": 3}, "effectSamples": {"minimum": 3}
+      }},
+      "evidence": {"properties": {
+        "source": {"properties": {"cleanup": {"const": "COMPLETE"}, "execution": {"enum": ["SUCCEEDED", "FAILED"]}}},
+        "sourceChecks": {"properties": {"status": {"const": "PASSED"}}}
+      }}
+    }}
+  }],
+  "$defs": {
+    "count": {"type": "integer", "minimum": 0, "maximum": 100},
+    "finding": {
+      "type": "object", "additionalProperties": false,
+      "required": ["version", "status", "witnessTrust", "signatureChain", "runnerCorrelation", "complete", "baselineSamples", "interventionSamples", "recoverySamples", "effectSamples", "applicationFailures", "timingFailures", "baselineApplicationMaxNS", "interventionApplicationMaxNS", "recoveryApplicationMaxNS", "candidateApplicationVerdict", "problems", "limitations"],
+      "properties": {
+        "version": {"const": "themis.live-observation/v1alpha1"},
+        "status": {"enum": ["OBSERVED_AND_CORRELATED", "OBSERVATIONS_INCOMPLETE", "OBSERVATIONS_CONTRADICTORY", "WITNESS_IDENTITY_UNTRUSTED", "WITNESS_SIGNATURE_INVALID", "UNSUPPORTED_SOURCE"]},
+        "witnessTrust": {"enum": ["TRUSTED", "UNTRUSTED"]},
+        "signatureChain": {"enum": ["NOT_CHECKED", "VALID", "INVALID"]},
+        "runnerCorrelation": {"enum": ["NOT_CHECKED", "VALID", "INVALID", "INCOMPLETE"]},
+        "complete": {"type": "boolean"},
+        "baselineSamples": {"$ref": "#/$defs/count"}, "interventionSamples": {"$ref": "#/$defs/count"},
+        "recoverySamples": {"$ref": "#/$defs/count"}, "effectSamples": {"$ref": "#/$defs/count"},
+        "applicationFailures": {"$ref": "#/$defs/count"}, "timingFailures": {"$ref": "#/$defs/count"},
+        "baselineApplicationMaxNS": {"type": "integer", "minimum": 0, "maximum": 1500000000},
+        "interventionApplicationMaxNS": {"type": "integer", "minimum": 0, "maximum": 1500000000},
+        "recoveryApplicationMaxNS": {"type": "integer", "minimum": 0, "maximum": 1500000000},
+        "candidateApplicationVerdict": {"enum": ["PASS", "FAIL", "INCONCLUSIVE"]},
+        "problems": {"type": "array", "maxItems": 128, "items": {"type": "string"}},
+        "limitations": {"type": "array", "minItems": 4, "maxItems": 16, "items": {"type": "string"}}
+      }
+    }
+  }
+}

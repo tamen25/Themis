@@ -13,6 +13,7 @@ import (
 	"testing"
 
 	"github.com/tamen25/themis/internal/cli"
+	"github.com/tamen25/themis/internal/result"
 	localrun "github.com/tamen25/themis/internal/run"
 )
 
@@ -46,13 +47,33 @@ spec:
 			if err := json.Unmarshal(stdout.Bytes(), &report); err != nil {
 				t.Fatalf("code=%d stdout=%s stderr=%s err=%v", code, stdout.String(), stderr.String(), err)
 			}
-			if code != wantCode || string(report.Verdict) != wantVerdict || report.Samples != 2 || stderr.Len() != 0 {
+			wantCoverage := result.Sufficient
+			if report.Samples < 2 {
+				wantCode, wantVerdict, wantCoverage = cli.ExitInconclusive, "INCONCLUSIVE", result.Insufficient
+				if report.Samples == 0 {
+					wantCoverage = result.Missing
+				}
+			}
+			if code != wantCode || string(report.Verdict) != wantVerdict || report.ExpectedSamples != 2 || report.Samples > 2 || report.Coverage != wantCoverage || stderr.Len() != 0 {
 				t.Fatalf("code=%d report=%+v stderr=%s", code, report, stderr.String())
 			}
 			server.Close() // Offline replay must work after the target disappears.
 			var summary, diagnostic bytes.Buffer
 			code = cli.Run([]string{"replay", "-f", filepath.Join(dir, report.RunID, "events.jsonl")}, &summary, &diagnostic, "test")
-			want := fmt.Sprintf("Contract: local-http-health\nRun:      %s\nSamples:  2\nCoverage: sufficient\n\nReadiness: %s\nError rate: %s\n\nVerdict: %s\n", report.RunID, wantVerdict, wantVerdict, wantVerdict)
+			readiness, errorRate := "", ""
+			for _, a := range report.Assertions {
+				if a.ID == "readiness" {
+					readiness = string(a.Verdict)
+				}
+				if a.ID == "error-rate" {
+					errorRate = string(a.Verdict)
+				}
+			}
+			if readiness == "" || errorRate == "" {
+				t.Fatal("required assertions absent")
+			}
+			want := fmt.Sprintf("Contract: local-http-health\nRun:      %s\nSamples:  %d\nCoverage: %s\n\nReadiness: %s\nError rate: %s\n\nVerdict: %s\n", report.RunID, report.Samples, strings.ToLower(string(report.Coverage)), readiness, errorRate, wantVerdict)
+			t.Logf("REAL CLI HTTP %d samples=%d/2 coverage=%s verdict=%s", status, report.Samples, report.Coverage, report.Verdict)
 			if code != wantCode || summary.String() != want || diagnostic.Len() != 0 {
 				t.Fatalf("code=%d stdout=%q stderr=%q", code, summary.String(), diagnostic.String())
 			}

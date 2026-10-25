@@ -1,0 +1,47 @@
+# The explicit owned installer substitutes only its fresh namespace, fixed role
+# and locally built OCI digest. Application egress is configured to one proxy IP.
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: native-REPLACE_ROLE, namespace: REPLACE_NAMESPACE}
+spec:
+  replicas: 1
+  strategy: {type: Recreate}
+  selector: {matchLabels: {app: native-REPLACE_ROLE}}
+  template:
+    metadata: {labels: {app: native-REPLACE_ROLE}}
+    spec:
+      serviceAccountName: native-data
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        fsGroup: 65532
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+        - name: fixture
+          image: REPLACE_IMAGE
+          imagePullPolicy: Never
+          args: [--role, REPLACE_ROLE]
+          env:
+            - name: POD_UID
+              valueFrom: {fieldRef: {fieldPath: metadata.uid}}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: {drop: [ALL]}
+          ports: [{containerPort: 8080}]
+          readinessProbe:
+            httpGet: {path: /health, port: 8080}
+            periodSeconds: 1
+          resources:
+            requests: {cpu: 100m, memory: 16Mi}
+            limits: {cpu: '1', memory: 64Mi}
+          volumeMounts:
+            - {name: config, mountPath: /config, readOnly: true}
+            - {name: state, mountPath: /state}
+      volumes:
+        - name: config
+          configMap: {name: native-config}
+        - name: state
+          emptyDir: {sizeLimit: 8Mi}

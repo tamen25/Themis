@@ -36,7 +36,7 @@ func (h *harness) guard(admin client.Client) {
 		NamespaceUID     string   `json:"namespaceUID"`
 		PreviousClusters []string `json:"previousClusters"`
 	}
-	if localstate.Read(filepath.Join(h.state, "bootstrap-owner.json"), &owner) != nil || owner.Version != "themis.kind-bootstrap/t2.1-v1" || owner.ClusterName != "themis-t21" || owner.Context != "kind-themis-t21" || owner.ClusterUID != h.cluster.Owner.ClusterUID || owner.NamespaceUID != h.cluster.Owner.NamespaceUID {
+	if localstate.Read(filepath.Join(h.state, "bootstrap-owner.json"), &owner) != nil || owner.Version != "themis.kind-bootstrap/t2.1-v1" || owner.ClusterName != h.cluster.Owner.ClusterName || owner.ClusterName != filepath.Base(h.state) || owner.Context != h.cluster.Owner.Context || owner.Context != "kind-"+owner.ClusterName || owner.ClusterUID != h.cluster.Owner.ClusterUID || owner.NamespaceUID != h.cluster.Owner.NamespaceUID {
 		h.t.Fatal("fresh trusted installer ownership required")
 	}
 	for name, uid := range map[string]string{"kube-system": owner.ClusterUID, "themis-test": owner.NamespaceUID} {
@@ -57,7 +57,7 @@ func (h *harness) admin() client.Client {
 	if err := localstate.Check(path); err != nil {
 		h.t.Fatal(err)
 	}
-	config, err := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(&clientcmd.ClientConfigLoadingRules{ExplicitPath: path}, &clientcmd.ConfigOverrides{CurrentContext: "kind-themis-t21"}).ClientConfig()
+	config, err := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(&clientcmd.ClientConfigLoadingRules{ExplicitPath: path}, &clientcmd.ConfigOverrides{CurrentContext: h.cluster.Owner.Context}).ClientConfig()
 	if err != nil {
 		h.t.Fatal(err)
 	}
@@ -188,8 +188,8 @@ func (h *harness) tool(label, program string, args ...string) []byte {
 
 func (h *harness) nodeGuard(admin client.Client) {
 	h.guard(admin)
-	label := h.tool("owned-kind-node-label", "docker", "inspect", "--format", `{{index .Config.Labels "io.x-k8s.kind.cluster"}}`, "themis-t21-control-plane")
-	if strings.TrimSpace(string(label)) != "themis-t21" {
+	label := h.tool("owned-kind-node-label", "docker", "inspect", "--format", `{{index .Config.Labels "io.x-k8s.kind.cluster"}}`, h.cluster.Owner.ClusterName+"-control-plane")
+	if strings.TrimSpace(string(label)) != h.cluster.Owner.ClusterName {
 		h.t.Fatal("node is not in the owned Kind cluster")
 	}
 }
@@ -266,7 +266,7 @@ func TestOwnedKindLiveTargetDrift(t *testing.T) {
 	if len(container) != 64 {
 		t.Fatal("unexpected container runtime identity")
 	}
-	h.tool("owned-synthetic-container-restart", "docker", "exec", "themis-t21-control-plane", "crictl", "stop", container)
+	h.tool("owned-synthetic-container-restart", "docker", "exec", h.cluster.Owner.ClusterName+"-control-plane", "crictl", "stop", container)
 	restarted := h.waitReady(admin, "", p.plan.Target.ContainerID)
 	if string(restarted.UID) != p.plan.Target.Fixture.PodUID {
 		t.Fatal("container restart unexpectedly replaced Pod")
@@ -303,7 +303,7 @@ func TestOwnedKindAPIUnavailableDuringCancellation(t *testing.T) {
 	admin := h.admin()
 	p := h.prepare("api-unavailable-cleanup", "healthy")
 	h.nodeGuard(admin)
-	listing := h.tool("owned-apiserver-container", "docker", "exec", "themis-t21-control-plane", "crictl", "ps", "--name", "kube-apiserver", "-o", "json")
+	listing := h.tool("owned-apiserver-container", "docker", "exec", h.cluster.Owner.ClusterName+"-control-plane", "crictl", "ps", "--name", "kube-apiserver", "-o", "json")
 	var data struct {
 		Containers []struct {
 			ID     string            `json:"id"`
@@ -318,15 +318,15 @@ func TestOwnedKindAPIUnavailableDuringCancellation(t *testing.T) {
 	events := h.await(p, "APPLIED")
 	h.save("api-failure-Apply-known", events[len(events)-1])
 	h.nodeGuard(admin)
-	h.tool("pause-only-owned-api-task", "docker", "exec", "themis-t21-control-plane", "ctr", "-n", "k8s.io", "tasks", "pause", id)
+	h.tool("pause-only-owned-api-task", "docker", "exec", h.cluster.Owner.ClusterName+"-control-plane", "ctr", "-n", "k8s.io", "tasks", "pause", id)
 	resumed := false
 	defer func() {
 		if !resumed {
-			h.tool("restore-owned-api-after-test-failure", "docker", "exec", "themis-t21-control-plane", "ctr", "-n", "k8s.io", "tasks", "resume", id)
+			h.tool("restore-owned-api-after-test-failure", "docker", "exec", h.cluster.Owner.ClusterName+"-control-plane", "ctr", "-n", "k8s.io", "tasks", "resume", id)
 		}
 	}()
 	h.command("cancel-with-api-unavailable", 7, "cancel", "--run-directory", p.runDir)
-	h.tool("resume-only-owned-api-task", "docker", "exec", "themis-t21-control-plane", "ctr", "-n", "k8s.io", "tasks", "resume", id)
+	h.tool("resume-only-owned-api-task", "docker", "exec", h.cluster.Owner.ClusterName+"-control-plane", "ctr", "-n", "k8s.io", "tasks", "resume", id)
 	resumed = true
 	_, report := h.finish("runner-during-api-outage", runner)
 	if report.Verdict == "PASS" {

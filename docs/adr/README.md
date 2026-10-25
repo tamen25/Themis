@@ -78,3 +78,26 @@ requirements in a record do not imply an existing execution component.
 | [T076](T076-public-source-mappings.md) | Two concrete pure source mappings and public PostgreSQL projection |
 | [T077](T077-explicit-evidence-publication.md) | Protected explicit signing, snapshot checks and exclusive publication |
 | [T078](T078-offline-verification-api.md) | Independent offline APIs without infrastructure execution authority |
+| [T079](T079-live-witness-protocol.md) | Separate process/key and nonce-bound signed observation journal |
+| [T080](T080-witness-identity-and-isolation.md) | Dedicated Kubernetes principal and explicit same-host assumptions |
+| [T081](T081-live-phase-correlation.md) | Phase inference, independent timings and disagreement semantics |
+| [T082](T082-additive-observation-verification.md) | Additive witness mapping/result without execution-trust upgrades |
+| [T083](T083-witness-bounds-and-crash-recovery.md) | Fixed budgets, durable prefixes and no session resumption |
+| [T084](T084-native-dependency-path.md) | One real fixed application/proxy/dependency path |
+| [T085](T085-final-actuator-binding.md) | Signed exact identities enforced at the final proxy boot |
+| [T086](T086-native-monotonic-expiry.md) | Local monotonic expiry, in-flight clipping and fresh restart |
+| [T087](T087-native-once-authority.md) | Native one-use approval and nonrenewing mutation |
+| [T088](T088-native-effect-recovery-cleanup.md) | Actual independent effect, outcome, recovery and original cleanup |
+| [T089](T089-native-privilege-boundary.md) | Fixed synthetic egress and no runtime workload mutation |
+| [T090](T090-native-witness-registration-and-authority.md) | Native public approval, live readiness and actual actuator grant commitments |
+| [T091](T091-native-witness-measurement-and-interruption.md) | Independent signed measurements, bounded sessions and interrupted prefixes |
+| [T092](T092-native-source-mapping-and-trust.md) | Explicit native evidence mapping and separate conservative findings |
+| [T093](T093-native-witness-trust-and-privilege.md) | Exact external scope, actor key separation and unchanged privilege boundary |
+| [T094](T094-native-finalization-and-cancellation.md) | Serialize original finalization with accepted cancellation |
+| [T095](T095-native-durable-attempt-and-file-identity.md) | Consume interrupted durable attempts and pin the actual journal writer |
+| [T096](T096-native-adversarial-review-evidence.md) | Preserve adversarial evidence and conservative verification semantics |
+| [T097](T097-phase-local-http-scheduling.md) | Clarify the existing phase-local HTTP schedule without changing digests |
+| [T098](T098-ci-portability-and-diagnostics.md) | Bounded CI readiness, ownership and diagnostics without weaker experiment gates |
+| [T099](T099-preview-build-provenance.md) | Exact source attribution and two independent preview builds without release promotion |
+| [T100](T100-independent-coverage-and-observation-windows.md) | Preserve uncertain independent coverage and align fixed observation windows after preparation |
+| [T101](T101-native-security-gate-and-fixed-toolchain.md) | Preserve JSON evidence, gate natively against frozen advisories and pin the fixed Go SDK |

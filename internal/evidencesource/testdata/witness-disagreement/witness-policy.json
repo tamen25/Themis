@@ -1,0 +1,23 @@
+{
+  "version": "themis.live-observation-trust/v1alpha1",
+  "keys": [
+    {
+      "witness": "independent-kind-witness",
+      "keyId": "635d67bc9c03fec9f05e25142bb7a7538a5d78fe85696285762abe31770c0537",
+      "publicKey": "25mjHGpZVHA5CyTpRGrnTqWdU6obXA3FL35p+32MmfY=",
+      "algorithm": "Ed25519",
+      "source": "kubernetes-synthetic-witness",
+      "scopes": [
+        {
+          "runId": "c0c028a6-d346-45cd-ac9f-4e399d997a3b",
+          "planDigest": "sha256:43cfe3909960d5f0f7c0d02f815e6bd54b5822b8666ccb3f4fe2a692497feab3",
+          "invocationId": "6fa757a79c2cc6e92054475c7c379546fb2352f9f098a0d01504fdc0b83c77de",
+          "session": "16cfbe833fcbe16994220de1dbfab0fa9b922e897edeeea4955735f0254f0030"
+        }
+      ],
+      "notBefore": "2026-10-17T21:15:13Z",
+      "notAfter": "2027-10-17T22:15:13Z",
+      "revoked": false
+    }
+  ]
+}

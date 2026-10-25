@@ -17,6 +17,9 @@ are no concurrent requests, retries, catch-up bursts or early success exits.
 The complete scenario is observed, even after readiness passes.
 
 There are at most 6015 slots across the schema's 16 phases and 10-minute budget.
+The count is the sum of each phase's rounded-up slot count. There is no minimum
+100ms gap across a phase boundary; [ADR-T097](adr/T097-phase-local-http-scheduling.md)
+clarifies the existing behavior without changing policy or plan identities.
 Impossible `minSamples`, including optional assertions, are denied before I/O.
 Each request has a one-second timeout capped by the phase and run deadlines.
 Ctrl+C/SIGTERM cancels collection and records a terminal cancellation when the

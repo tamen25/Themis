@@ -1,0 +1,17 @@
+{
+  "version": "themis.evidence-trust/v1alpha1",
+  "keys": [
+    {
+      "publisher": "native-t43-publisher",
+      "keyId": "863569ac024129e3a3a5537ec7e04e0b9deeb1364b3426214e9336c03f620741",
+      "publicKey": "o2v1xZ2QgbLYTEZ0Krm2jW/jweQlFIlCo2eG37cq55A=",
+      "algorithm": "Ed25519",
+      "engines": [
+        "native-dependency-witness"
+      ],
+      "notBefore": "2026-10-18T14:12:26Z",
+      "notAfter": "2026-10-19T15:12:26Z",
+      "revoked": false
+    }
+  ]
+}

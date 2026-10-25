@@ -79,6 +79,18 @@ func Check(path string) error {
 
 // WriteNew never replaces existing state. Its parent must already be private.
 func WriteNew(path string, value any) error {
+	return writeNew(path, value, nil)
+}
+
+// checkpoint is private to actual-file crash tests. Runtime callers always use
+// WriteNew; no environment variable or untrusted record can select a checkpoint.
+func writeNew(path string, value any, checkpoint func(string) error) error {
+	at := func(stage string) error {
+		if checkpoint != nil {
+			return checkpoint(stage)
+		}
+		return nil
+	}
 	if err := Check(filepath.Dir(path)); err != nil {
 		return err
 	}
@@ -95,13 +107,22 @@ func WriteNew(path string, value any) error {
 	}
 	defer os.Remove(temporary)
 	defer f.Close()
+	if err := at("opened"); err != nil {
+		return err
+	}
 	data = append(data, '\n')
 	if n, err := f.Write(data); err != nil {
 		return err
 	} else if n != len(data) {
 		return io.ErrShortWrite
 	}
+	if err := at("written"); err != nil {
+		return err
+	}
 	if err := f.Sync(); err != nil {
+		return err
+	}
+	if err := at("synced"); err != nil {
 		return err
 	}
 	if err := f.Close(); err != nil {
@@ -110,7 +131,13 @@ func WriteNew(path string, value any) error {
 	if err := os.Link(temporary, path); err != nil {
 		return err
 	}
-	return SyncDirectory(filepath.Dir(path))
+	if err := at("linked"); err != nil {
+		return err
+	}
+	if err := SyncDirectory(filepath.Dir(path)); err != nil {
+		return err
+	}
+	return at("directory-synced")
 }
 
 // OpenNew creates an owner-only append file and never opens an existing file.

@@ -1,5 +1,53 @@
 # Security policy
 
+Build and CI require Go 1.26.10 or newer; developer previews require the exact
+go.mod patch. GO-2026-6809 is fixed in that SDK. CI retains JSON scanner evidence
+and uses a separate native govulncheck gate against the same frozen official
+advisories. JSON mode's zero exit never establishes a clean security result.
+See [the gate decision](docs/adr/T101-native-security-gate-and-fixed-toolchain.md).
+
+The [developer-preview candidate](docs/developer-preview.md) retains all existing
+authorization, expiry, cleanup and evidence boundaries. Build checksums and
+matching local rebuilds attribute artifact bytes; they do not authenticate a
+complete infrastructure execution. CI/platform/integration qualification and
+release approval remain separate. Chaos Mesh execution remains disabled.
+
+T4.3's [native witness integration](docs/native-witness.md) signs newly measured
+client observations under a separate read-only principal/key. Public approval
+commitments, signed readiness, proxy Apply nonce and a distinct read-only signed
+actuator receipt correlate the exact original grant, plan, invocation and boot.
+The witness never receives operational grants or cleanup authority. Publisher and
+witness roots must be independently supplied and exactly scoped; embedded keys
+and a valid publisher signature cannot establish experiment truth. Original
+cancellation and cleanup uncertainty are preserved, including after independent
+recovery observations and later reconciliation. Whole execution remains
+NOT_INDEPENDENTLY_ATTESTED / INCONCLUSIVE. Same host/admin and trusted installer,
+clock, image and infrastructure assumptions remain explicit. Old fault authority,
+expiry, controller permissions and historical formats are unchanged.
+
+T4.2's [native dependency adapter](docs/native-dependency.md) supports only a fresh
+owned Kind application/proxy/dependency path. A signed installer binding, explicit
+exact-plan approval and the actuator's own Pod/boot/key check gate one fixed delay.
+Process-local monotonic expiry and in-flight clipping do not require a runner,
+controller or API. Restart does not inherit authority. A crashed proxy can still
+disrupt real dependency traffic; expiration alone cannot establish recovery.
+Runtime has no workload mutation, exec or Secrets privilege. Dedicated read-only
+observation, fixed-IP egress transports and original-identity cleanup keep their
+roles separate. Same user/admin, trusted images/Downward API, operating monotonic
+clock/scheduler and filesystem limitations remain explicit. No privileged network
+chaos, CNI isolation, production execution or whole-run attestation is claimed.
+Old Chaos Mesh blockers and its execution-disabled admission remain unchanged.
+
+T4.1's [live witness](docs/live-observation.md) has a dedicated signing key,
+Kubernetes ServiceAccount and exact-Pod forwarding session. It cannot use runner
+execution or cleanup authority. Named read/forward privileges do not grant workload
+mutation, exec or Secrets access. Signed nonce-bound responses identify the pinned
+fixture; the witness signs its own client timing. Exact-session external trust is
+required and publisher/source-key reuse is rejected. Same OS user/admin isolation,
+honest infrastructure, trusted UTC and noncollusion are not established. Witness
+crash, API loss and cleanup uncertainty remain incomplete evidence; whole trusted
+execution stays INCONCLUSIVE even when application observations correlate.
+
 T4.0 [evidence publication](docs/evidence-bundles.md) authenticates publisher
 assertions about artifact bytes. External current, unrevoked trust policy is
 required; embedded keys never grant publisher trust. Offline execution stays
