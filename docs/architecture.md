@@ -137,9 +137,9 @@ library. No POSIX-mode-only confidentiality claim is made on Windows.
 
 These libraries avoid an incomplete hand-written YAML or schema engine. The
 schema is embedded and compilation uses a loader that rejects external resources.
-Go 1.26.9 is the minimum after the new HTTP call graph exposed standard-library
-advisories in the previous 1.26.8 toolchain. CI selects the latest
-available 1.26 patch.
+Go 1.26.10 is the minimum after the urgent crypto/x509 fix in GO-2026-6809.
+The previous HTTP audit raised the minimum from 1.26.8 to 1.26.9. CI selects the
+exact patch from go.mod.
 There is no CLI framework, database, Kubernetes/cloud SDK, provider client or
 observability dependency. Diagnostics use escaped terminal errors; run events
 are structured JSON records.

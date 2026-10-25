@@ -96,3 +96,8 @@ requirements in a record do not imply an existing execution component.
 | [T094](T094-native-finalization-and-cancellation.md) | Serialize original finalization with accepted cancellation |
 | [T095](T095-native-durable-attempt-and-file-identity.md) | Consume interrupted durable attempts and pin the actual journal writer |
 | [T096](T096-native-adversarial-review-evidence.md) | Preserve adversarial evidence and conservative verification semantics |
+| [T097](T097-phase-local-http-scheduling.md) | Clarify the existing phase-local HTTP schedule without changing digests |
+| [T098](T098-ci-portability-and-diagnostics.md) | Bounded CI readiness, ownership and diagnostics without weaker experiment gates |
+| [T099](T099-preview-build-provenance.md) | Exact source attribution and two independent preview builds without release promotion |
+| [T100](T100-independent-coverage-and-observation-windows.md) | Preserve uncertain independent coverage and align fixed observation windows after preparation |
+| [T101](T101-native-security-gate-and-fixed-toolchain.md) | Preserve JSON evidence, gate natively against frozen advisories and pin the fixed Go SDK |

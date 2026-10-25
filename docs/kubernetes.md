@@ -126,7 +126,7 @@ future Kubernetes fault authorization mechanism. See the
 
 ## Reproduce in an owned Kind cluster
 
-Tested development baseline: Go 1.26.9, Kind 0.32.0, Kubernetes 1.35.5, Kubernetes
+Tested development baseline: Go 1.26.10, Kind 0.32.0, Kubernetes 1.35.5, Kubernetes
 Go modules 0.35.5 and controller-runtime 0.23.3. The node and synthetic image are
 pinned by digest. The synthetic target is HashiCorp's tiny HTTP echo application;
 its image is a demo fixture, not a production image recommendation.

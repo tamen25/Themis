@@ -1,0 +1,42 @@
+{
+  "schema_version": "1.3.1",
+  "id": "GO-2099-0001",
+  "modified": "2026-10-21T00:00:00Z",
+  "published": "2026-10-21T00:00:00Z",
+  "summary": "Synthetic CI regression control; not a real vulnerability",
+  "details": "Deliberately marks a harmless standard-library function as affected to test scanner gate semantics offline.",
+  "affected": [
+    {
+      "package": {
+        "name": "stdlib",
+        "ecosystem": "Go"
+      },
+      "ranges": [
+        {
+          "type": "SEMVER",
+          "events": [
+            {
+              "introduced": "0"
+            },
+            {
+              "fixed": "99.0.0"
+            }
+          ]
+        }
+      ],
+      "ecosystem_specific": {
+        "imports": [
+          {
+            "path": "crypto/sha256",
+            "symbols": [
+              "Sum256"
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "database_specific": {
+    "url": "https://example.invalid/synthetic-security-gate-control"
+  }
+}

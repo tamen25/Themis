@@ -10,12 +10,15 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"testing"
 	"time"
 
 	adapter "github.com/tamen25/themis/internal/dependencyexperiment"
 	wire "github.com/tamen25/themis/internal/dependencyhttp"
 	"github.com/tamen25/themis/internal/localstate"
+	"github.com/tamen25/themis/internal/postgres"
+	"github.com/tamen25/themis/test/ownedtask"
 )
 
 type commandRecord struct {
@@ -27,7 +30,32 @@ type commandRecord struct {
 	Stderr    string   `json:"stderr"`
 	Millis    int64    `json:"millis"`
 }
+
+func externalCommand(program string, args ...string) *exec.Cmd {
+	if proxy := os.Getenv("THEMIS_TEST_COMMAND_PROXY"); proxy != "" {
+		return exec.Command(proxy, append([]string{"proxy", program}, args...)...)
+	}
+	return exec.Command(program, args...)
+}
+
+func powershellProgram() string {
+	if runtime.GOOS == "windows" {
+		return "powershell"
+	}
+	return "pwsh"
+}
+
+func refreshArgs(script, cluster string) []string {
+	args := []string{"-NoProfile", "-ExecutionPolicy", "Bypass", "-File", script, "-Action", "refresh", "-ClusterName", cluster}
+	if proxy := os.Getenv("THEMIS_TEST_COMMAND_PROXY"); proxy != "" {
+		args = append(args, "-CommandProxy", proxy)
+	}
+	return args
+}
+
 type harness struct {
+	tasks              *ownedtask.Controller
+	taskPins           map[string]bool
 	t                  *testing.T
 	state, bin, public string
 	root               string
@@ -45,6 +73,12 @@ func newHarness(t *testing.T) *harness {
 	t.Helper()
 	if os.Getenv("THEMIS_NATIVE_DEPENDENCY") != "1" {
 		t.Skip("NOT EXECUTED: explicit newly owned T4.2 opt-in required")
+	}
+	if os.Getenv("DOCKER_CONTEXT") != "" {
+		t.Fatal("DOCKER_CONTEXT must be empty; it overrides the explicit local Docker endpoint")
+	}
+	if err := postgres.ValidateEndpoint(os.Getenv("DOCKER_HOST")); err != nil {
+		t.Fatal(err)
 	}
 	h := &harness{t: t, state: os.Getenv("THEMIS_NATIVE_DEPENDENCY_STATE"), bin: os.Getenv("THEMIS_NATIVE_DEPENDENCY_BINARY")}
 	h.root = filepath.Dir(filepath.Dir(h.state))

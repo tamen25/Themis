@@ -278,7 +278,7 @@ func TestOwnedKindCoordinatedDeathRestartAndCancellation(t *testing.T) {
 	if runtime.GOOS != "windows" {
 		program = "pwsh"
 	}
-	arguments := []string{"-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts/kind-experiment.ps1", "-Action", "restart-controller"}
+	arguments := []string{"-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts/kind-experiment.ps1", "-Action", "restart-controller", "-ClusterName", h.cluster.Owner.ClusterName}
 	if proxy := os.Getenv("THEMIS_TEST_COMMAND_PROXY"); proxy != "" {
 		arguments = append(arguments, "-CommandProxy", proxy)
 	}
@@ -333,7 +333,7 @@ func TestOwnedKindCoordinatedAPIOutageAndMissingInventory(t *testing.T) {
 	h.copy("L-missing-inventory-events.jsonl", filepath.Join(p.execution.runDir, "events.jsonl"))
 	p = h.coordinate("L-api-outage", "healthy", true)
 	h.nodeGuard(admin)
-	listing := h.tool("L-owned-api-container", "docker", "exec", "themis-t21-control-plane", "crictl", "ps", "--name", "kube-apiserver", "-o", "json")
+	listing := h.tool("L-owned-api-container", "docker", "exec", h.cluster.Owner.ClusterName+"-control-plane", "crictl", "ps", "--name", "kube-apiserver", "-o", "json")
 	var data struct {
 		Containers []struct {
 			ID     string            `json:"id"`
@@ -347,11 +347,11 @@ func TestOwnedKindCoordinatedAPIOutageAndMissingInventory(t *testing.T) {
 	runner = h.startCoordinate(p)
 	h.await(p.execution, "APPLIED")
 	h.nodeGuard(admin)
-	h.tool("L-pause-only-owned-api", "docker", "exec", "themis-t21-control-plane", "ctr", "-n", "k8s.io", "tasks", "pause", id)
+	h.tool("L-pause-only-owned-api", "docker", "exec", h.cluster.Owner.ClusterName+"-control-plane", "ctr", "-n", "k8s.io", "tasks", "pause", id)
 	resumed := false
 	defer func() {
 		if !resumed {
-			h.tool("L-restore-owned-api", "docker", "exec", "themis-t21-control-plane", "ctr", "-n", "k8s.io", "tasks", "resume", id)
+			h.tool("L-restore-owned-api", "docker", "exec", h.cluster.Owner.ClusterName+"-control-plane", "ctr", "-n", "k8s.io", "tasks", "resume", id)
 		}
 	}()
 	output := h.command("L-outage-independent-status", 0, "coordinate", "status", "--directory", p.directory)
@@ -359,7 +359,7 @@ func TestOwnedKindCoordinatedAPIOutageAndMissingInventory(t *testing.T) {
 		t.Fatal("outage status guessed current state")
 	}
 	h.command("L-outage-accepted-cancel-pending", 7, "coordinate", "cancel", "--directory", p.directory)
-	h.tool("L-resume-only-owned-api", "docker", "exec", "themis-t21-control-plane", "ctr", "-n", "k8s.io", "tasks", "resume", id)
+	h.tool("L-resume-only-owned-api", "docker", "exec", h.cluster.Owner.ClusterName+"-control-plane", "ctr", "-n", "k8s.io", "tasks", "resume", id)
 	resumed = true
 	// The runner can finish before the cancellation process reaches its gate;
 	// even then the API failure must prevent a measured PASS.
@@ -388,7 +388,7 @@ func TestOwnedKindStatusPollingCannotStarveCleanup(t *testing.T) {
 		if len(container) != 64 || string(pod.UID) == "" || p.DeploymentUID == "" {
 			t.Fatal("owned fixture identity unavailable")
 		}
-		h.tool("K-installer-restart-exact-fixture-boot", "docker", "exec", "themis-t21-control-plane", "crictl", "stop", container)
+		h.tool("K-installer-restart-exact-fixture-boot", "docker", "exec", h.cluster.Owner.ClusterName+"-control-plane", "crictl", "stop", container)
 		h.waitReady(admin, "", pod.Status.ContainerStatuses[0].ContainerID)
 		h.resetRequest(admin)
 	}

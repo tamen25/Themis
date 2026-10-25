@@ -1,5 +1,17 @@
 # Security policy
 
+Build and CI require Go 1.26.10 or newer; developer previews require the exact
+go.mod patch. GO-2026-6809 is fixed in that SDK. CI retains JSON scanner evidence
+and uses a separate native govulncheck gate against the same frozen official
+advisories. JSON mode's zero exit never establishes a clean security result.
+See [the gate decision](docs/adr/T101-native-security-gate-and-fixed-toolchain.md).
+
+The [developer-preview candidate](docs/developer-preview.md) retains all existing
+authorization, expiry, cleanup and evidence boundaries. Build checksums and
+matching local rebuilds attribute artifact bytes; they do not authenticate a
+complete infrastructure execution. CI/platform/integration qualification and
+release approval remain separate. Chaos Mesh execution remains disabled.
+
 T4.3's [native witness integration](docs/native-witness.md) signs newly measured
 client observations under a separate read-only principal/key. Public approval
 commitments, signed readiness, proxy Apply nonce and a distinct read-only signed

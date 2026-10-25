@@ -1,7 +1,7 @@
 param(
  [ValidateSet('up','refresh','down')][string]$Action='up',
  [string]$ClusterName='',
- [string]$CommandProxy='rtk'
+ [string]$CommandProxy=''
 )
 $ErrorActionPreference='Stop'
 $repository=Split-Path -Parent $PSScriptRoot
@@ -13,11 +13,11 @@ if($Action -eq 'down'){return}
 $state=Join-Path $repository ('.themis/'+$ClusterName)
 $witness=Join-Path $state 'witness';$admin=Join-Path $state 'admin-kubeconfig';$context='kind-'+$ClusterName
 $encoding=[Text.UTF8Encoding]::new($false)
-function Tool([string]$Program,[string[]]$Arguments){$preference=$ErrorActionPreference;$ErrorActionPreference='Continue';try{$output=& $CommandProxy proxy $Program @Arguments;$code=$LASTEXITCODE}finally{$ErrorActionPreference=$preference};if($code -ne 0){throw "$Program exited $code"};return $output}
+function Tool([string]$Program,[string[]]$Arguments){$preference=$ErrorActionPreference;$ErrorActionPreference='Continue';try{if($CommandProxy){$output=& $CommandProxy proxy $Program @Arguments}else{$output=& $Program @Arguments};$code=$LASTEXITCODE}finally{$ErrorActionPreference=$preference};if($code -ne 0){throw "$Program exited $code"};return $output}
 function Kube([string[]]$Arguments){Tool 'kubectl' (@('--kubeconfig',$admin,'--context',$context)+$Arguments)}
 function Guard {
  $o=Get-Content -LiteralPath (Join-Path $state 'bootstrap.json') -Raw|ConvertFrom-Json
- if($o.clusterName -ne $ClusterName -or $o.namespace -ne ('themis-dep-'+$ClusterName.Substring(11)) -or -not $o.clusterUID -or -not $o.namespaceUID -or -not $o.engineID -or (Tool 'docker' @('info','--format','{{.ID}}')) -ne $o.engineID){throw 'Original owned engine/cluster/namespace required'}
+ if($o.clusterName -ne $ClusterName -or $o.namespace -ne ('themis-dep-'+$ClusterName.Substring(11)) -or -not $o.clusterUID -or -not $o.namespaceUID -or -not $o.engineID -or $env:DOCKER_CONTEXT -or $env:DOCKER_HOST -ne $o.endpoint -or $o.context -ne $context -or $o.nodeID -notmatch '^[a-f0-9]{64}$' -or (Tool 'docker' @('--host',$o.endpoint,'info','--format','{{.ID}}')) -ne $o.engineID -or (Tool 'docker' @('--host',$o.endpoint,'inspect','--type','container','--format','{{.Id}}',($ClusterName+'-control-plane'))) -ne $o.nodeID){throw 'Original owned engine/cluster/namespace required'}
  if((Kube @('get','namespace','kube-system','-o','jsonpath={.metadata.uid}')) -ne $o.clusterUID -or (Kube @('get','namespace',$o.namespace,'-o','jsonpath={.metadata.uid}')) -ne $o.namespaceUID){throw 'Original Kubernetes ownership changed'}
  return $o
 }

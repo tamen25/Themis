@@ -3,7 +3,8 @@
 Status: Accepted — 2026-10-15
 
 Follow-up: ADR-T012 extends this first slice with local observations and replay.
-Go 1.26.9 supersedes the initial 1.26.8 toolchain minimum after the HTTP audit.
+Go 1.26.9 superseded the initial 1.26.8 minimum after the HTTP audit.
+ADR-T101 raises the active minimum to 1.26.10; the original decision below is historical.
 
 ## Context
 

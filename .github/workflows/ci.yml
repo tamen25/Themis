@@ -7,23 +7,35 @@ on:
 permissions:
   contents: read
 
+env:
+  GOENV: 'off'
+  GOWORK: 'off'
+  GOTOOLCHAIN: local
+  GOFLAGS: -mod=readonly
+
 jobs:
   validate:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        os: [ubuntu-24.04, windows-2025, macos-15-intel]
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 15
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
-          go-version: '1.26.x'
-          check-latest: true
-          cache-dependency-path: go.sum
+          go-version-file: go.mod
+          cache: false
+      - name: Record toolchain and platform
+        shell: bash
+        run: |
+          go version
+          go env GOOS GOARCH CGO_ENABLED
+          test "$(go env GOARCH)" = amd64
+          printf 'runner=%s arch=%s image=%s version=%s\n' "$RUNNER_OS" "$RUNNER_ARCH" "${ImageOS:-unavailable}" "${ImageVersion:-unavailable}"
       - name: Check formatting
         shell: bash
         run: |
@@ -37,17 +49,18 @@ jobs:
       - name: Check dependency metadata
         shell: bash
         run: |
-          go mod tidy
-          git diff --exit-code -- go.mod go.sum
+          go mod tidy -diff
       - name: Static checks
         run: go vet ./...
+      - name: Security gate recorder regressions
+        run: python -m unittest discover -s scripts/tests -p "test_*.py"
       - name: Unit and integration tests
-        run: go test ./...
+        run: python scripts/ci-command.py --name unit -- go test -count=1 -json -timeout=10m ./...
       - name: Build
         run: go build -trimpath -o bin/ ./cmd/...
       - name: Race detector
         if: runner.os == 'Linux'
-        run: go test -race ./...
+        run: python scripts/ci-command.py --name race -- go test -race -count=1 -json -timeout=10m ./...
       - name: Fuzz contract parsing
         if: runner.os == 'Linux'
         run: go test ./internal/contract -run '^$' -fuzz '^FuzzParse$' -fuzztime 10s
@@ -56,7 +69,14 @@ jobs:
         run: go test ./internal/result -run '^$' -fuzz '^FuzzAggregateNeverFalsePass$' -fuzztime 10s
       - name: Audit reachable vulnerabilities
         if: runner.os == 'Linux'
-        run: go run golang.org/x/vuln/cmd/govulncheck@v1.9.0 ./...
+        shell: bash
+        run: |
+          export GOBIN="$RUNNER_TEMP/themis-security-tools"
+          go install golang.org/x/vuln/cmd/govulncheck@v1.9.0
+          go version -m "$GOBIN/govulncheck"
+          python scripts/tests/security_gate_integration.py --scanner "$GOBIN/govulncheck" --output execution-evidence/ci/controls
+          database=$(python scripts/security-snapshot.py --output execution-evidence/ci/vulndb)
+          python scripts/ci-security.py --scanner "$GOBIN/govulncheck" --db "$database"
       - name: Fuzz journal replay
         if: runner.os == 'Linux'
         run: go test ./internal/run -run '^$' -fuzz '^FuzzReplay$' -fuzztime 10s
@@ -93,9 +113,25 @@ jobs:
         run: |
           go test ./pkg/liveobservation -run '^$' -fuzz '^FuzzSignedObservationJournal$' -fuzztime 10s
           go test ./pkg/liveobservation -run '^$' -fuzz '^FuzzWitnessPolicy$' -fuzztime 10s
+      - name: Fuzz native authority and observation boundaries
+        if: runner.os == 'Linux'
+        run: |
+          go test ./internal/dependencyhttp -run '^$' -fuzz '^FuzzNativeGrant$' -fuzztime 10s
+          go test ./internal/dependencyexperiment -run '^$' -fuzz '^FuzzNativeReportNeverGrantsTrustedExecution$' -fuzztime 10s
+          go test ./pkg/nativeobservation -run '^$' -fuzz '^FuzzNativeSignedJournal$' -fuzztime 10s
+          go test ./pkg/nativeobservation -run '^$' -fuzz '^FuzzNativeWitnessPolicy$' -fuzztime 10s
+      - name: Retain actual test and scanner outcomes
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: checks-${{ matrix.os }}-${{ github.run_attempt }}
+          path: execution-evidence/ci/
+          retention-days: 7
+          if-no-files-found: ignore
+          include-hidden-files: false
 
   kind-dry-run:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
@@ -103,7 +139,8 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e
         with:
-          go-version: '1.26.x'
+          go-version-file: go.mod
+          cache: false
       - name: Install pinned Kind
         shell: pwsh
         run: |
@@ -126,7 +163,7 @@ jobs:
         run: ./scripts/kind-down.ps1
 
   kind-experiments:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
@@ -134,7 +171,8 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e
         with:
-          go-version: '1.26.x'
+          go-version-file: go.mod
+          cache: false
       - name: Install pinned Kind
         shell: pwsh
         run: |
@@ -165,7 +203,7 @@ jobs:
         run: ./scripts/kind-experiment.ps1 -Action down
 
   kind-external-planning:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
@@ -173,7 +211,8 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e
         with:
-          go-version: '1.26.x'
+          go-version-file: go.mod
+          cache: false
       - name: Install pinned Kind
         shell: pwsh
         run: |

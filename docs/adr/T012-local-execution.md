@@ -21,7 +21,9 @@ Bind execution policy `themis.local-http/t0-v1` into planner `t0-v2`; change pla
 fixtures and digests deliberately. Contract v1alpha1 bytes remain compatible.
 Keep plans non-mutating previews; admission is a separate runtime decision.
 
-Schedule one request slot per 100ms, sequentially, for the entire scenario.
+Schedule one request slot per 100ms, sequentially, within each scenario phase.
+Clarification: the implemented grid restarts at each phase; see
+[T097](T097-phase-local-http-scheduling.md). This adds no behavior or digest change.
 No retries, redirects, proxies, body retention, concurrency or catch-up bursts.
 Limit requests to one second and the remaining phase/run window, and headers to
 16 KiB. Require every scheduled observation for sufficient full-run coverage.

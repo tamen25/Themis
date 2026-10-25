@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -15,6 +14,7 @@ import (
 	wire "github.com/tamen25/themis/internal/dependencyhttp"
 	"github.com/tamen25/themis/pkg/evidence"
 	obs "github.com/tamen25/themis/pkg/nativeobservation"
+	"github.com/tamen25/themis/test/ownedtask"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 )
@@ -69,15 +69,20 @@ func (h *harness) effect(p prepared, count int) {
 func (h *harness) external(label, program string, want int, args ...string) []byte {
 	h.t.Helper()
 	start := time.Now()
-	cmd := exec.Command("rtk", append([]string{"proxy", program}, args...)...)
-	cmd.Env = append(os.Environ(), "DOCKER_HOST=npipe:////./pipe/docker_engine", "DEBUG=")
+	cmd := externalCommand(program, args...)
+	cmd.Env = append(os.Environ(), "DEBUG=")
 	var out, errOut bytes.Buffer
 	cmd.Stdout = &out
 	cmd.Stderr = &errOut
 	e := cmd.Run()
 	code := 0
 	if e != nil {
-		code = cmd.ProcessState.ExitCode()
+		code = -1
+		if cmd.ProcessState != nil {
+			code = cmd.ProcessState.ExitCode()
+		} else {
+			errOut.WriteString("launch failed: " + e.Error())
+		}
 	}
 	h.commands = append(h.commands, command{label, program, args, code, out.String(), errOut.String(), time.Since(start).Milliseconds()})
 	h.save("commands.json", h.commands)
@@ -88,19 +93,74 @@ func (h *harness) external(label, program string, want int, args ...string) []by
 }
 func (h *harness) taskAction(c *adapter.Cluster, label, action, id string) {
 	h.t.Helper()
-	if action != "pause" && action != "resume" && action != "kill" {
-		h.t.Fatal("fixed owned task action only")
+	if h.tasks == nil {
+		owner, err := ownedtask.Read(h.state, c.Owner.ClusterName, c.Owner.ClusterUID, c.Owner.NamespaceUID)
+		if err != nil {
+			h.t.Fatal(err)
+		}
+		h.tasks = &ownedtask.Controller{Owner: owner}
+		h.taskPins = map[string]bool{}
 	}
-	if len(id) != 64 || !strings.HasPrefix(c.Owner.ClusterName, "themis-t42-") {
-		h.t.Fatal("exact owned task required")
+	defer func() { h.save(label+"-task-commands.json", h.tasks.Receipts) }()
+	if !h.taskPins[id] {
+		if action == "resume" {
+			h.t.Fatal("resume requires the original paused task binding")
+		}
+		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+		defer cancel()
+		if c.Environment(ctx) != nil {
+			h.t.Fatal("original cluster identity unavailable")
+		}
+		podUID := ""
+		for _, namespace := range []string{c.Owner.Namespace, "kube-system"} {
+			pods, err := c.API.CoreV1().Pods(namespace).List(ctx, metav1.ListOptions{})
+			if err != nil {
+				h.t.Fatal("original task namespace unavailable")
+			}
+			for _, pod := range pods.Items {
+				allowed := false
+				if namespace == c.Owner.Namespace {
+					for _, name := range c.Owner.Pods {
+						if pod.Name == name {
+							allowed = true
+						}
+					}
+				} else {
+					allowed = pod.Name == "kube-apiserver-"+c.Owner.ClusterName+"-control-plane" || pod.Name == "kube-controller-manager-"+c.Owner.ClusterName+"-control-plane"
+				}
+				if !allowed {
+					continue
+				}
+				for _, status := range pod.Status.ContainerStatuses {
+					if status.ContainerID == "containerd://"+id {
+						runtimeUID, err := ownedtask.RuntimeUID(c.Owner.ClusterName, namespace, pod.Name, pod.Spec.NodeName, string(pod.UID), pod.Annotations)
+						if err != nil {
+							h.t.Fatal(err)
+						}
+						h.save(label+"-original-pod-binding.json", struct{ APIUID, RuntimeUID, ContainerID, Node string }{string(pod.UID), runtimeUID, id, pod.Spec.NodeName})
+						podUID = runtimeUID
+					}
+				}
+			}
+		}
+		if podUID == "" {
+			h.t.Fatal("exact original owned task missing")
+		}
+		if err := h.tasks.Bind(id, podUID); err != nil {
+			h.t.Fatal(err)
+		}
+		h.taskPins[id] = true
 	}
-	args := []string{"-H", "npipe:////./pipe/docker_engine", "exec", c.Owner.ClusterName + "-control-plane", "ctr", "-n", "k8s.io", "tasks", action}
-	if action == "kill" {
-		args = append(args, "--signal", "SIGKILL")
+	err := h.tasks.Action(action, id)
+	h.save(label+"-task-control.json", struct {
+		Action, Task, Node, Engine string
+		Success                    bool
+	}{action, id, h.tasks.Owner.NodeID, h.tasks.Owner.EngineID, err == nil})
+	if err != nil {
+		h.t.Fatal("original owned task operation failed", err)
 	}
-	args = append(args, id)
-	h.external(label, "docker", 0, args...)
 }
+
 func (h *harness) reconcile(label string, p prepared) string {
 	h.t.Helper()
 	before, _ := os.ReadFile(filepath.Join(p.directory, "events.jsonl"))
@@ -318,7 +378,7 @@ func TestOwnedKindWitnessRecordsProxyCrashAndPodReplacement(t *testing.T) {
 			t.Fatal("replacement inherited original authority")
 		}
 		h.save(mode+"-old-authority-denied.json", reply)
-		h.external(mode+"-explicit-owned-rebind", "powershell", 0, "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", filepath.Join(h.repo, "scripts", "kind-native-witness.ps1"), "-Action", "refresh", "-ClusterName", c.Owner.ClusterName, "-CommandProxy", "rtk")
+		h.external(mode+"-explicit-owned-rebind", powershellProgram(), 0, refreshArgs(filepath.Join(h.repo, "scripts", "kind-native-witness.ps1"), c.Owner.ClusterName)...)
 		t.Logf("REAL KIND %s: genuine signed application disruption, new boot/key, original authority denied; no recovery PASS", mode)
 	}
 }

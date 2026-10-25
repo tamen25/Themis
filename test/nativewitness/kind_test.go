@@ -17,9 +17,11 @@ import (
 	adapter "github.com/tamen25/themis/internal/dependencyexperiment"
 	wire "github.com/tamen25/themis/internal/dependencyhttp"
 	"github.com/tamen25/themis/internal/localstate"
+	"github.com/tamen25/themis/internal/postgres"
 	"github.com/tamen25/themis/pkg/evidence"
 	"github.com/tamen25/themis/pkg/evidenceverify"
 	obs "github.com/tamen25/themis/pkg/nativeobservation"
+	"github.com/tamen25/themis/test/ownedtask"
 )
 
 type command struct {
@@ -40,6 +42,8 @@ type process struct {
 	waited         bool
 }
 type harness struct {
+	tasks                                                            *ownedtask.Controller
+	taskPins                                                         map[string]bool
 	t                                                                *testing.T
 	state, repo, bin, public, private, publisherDir, publisherPolicy string
 	publisher                                                        evidence.Publisher
@@ -53,10 +57,38 @@ type prepared struct {
 	observer, witness                                *process
 }
 
+func externalCommand(program string, args ...string) *exec.Cmd {
+	if proxy := os.Getenv("THEMIS_TEST_COMMAND_PROXY"); proxy != "" {
+		return exec.Command(proxy, append([]string{"proxy", program}, args...)...)
+	}
+	return exec.Command(program, args...)
+}
+
+func powershellProgram() string {
+	if runtime.GOOS == "windows" {
+		return "powershell"
+	}
+	return "pwsh"
+}
+
+func refreshArgs(script, cluster string) []string {
+	args := []string{"-NoProfile", "-ExecutionPolicy", "Bypass", "-File", script, "-Action", "refresh", "-ClusterName", cluster}
+	if proxy := os.Getenv("THEMIS_TEST_COMMAND_PROXY"); proxy != "" {
+		args = append(args, "-CommandProxy", proxy)
+	}
+	return args
+}
+
 func newHarness(t *testing.T) *harness {
 	t.Helper()
 	if os.Getenv("THEMIS_NATIVE_WITNESS") != "1" {
 		t.Skip("NOT EXECUTED: explicit fresh owned native witness Kind required")
+	}
+	if os.Getenv("DOCKER_CONTEXT") != "" {
+		t.Fatal("DOCKER_CONTEXT must be empty; it overrides the explicit local Docker endpoint")
+	}
+	if err := postgres.ValidateEndpoint(os.Getenv("DOCKER_HOST")); err != nil {
+		t.Fatal(err)
 	}
 	h := &harness{t: t, state: os.Getenv("THEMIS_NATIVE_WITNESS_STATE"), bin: os.Getenv("THEMIS_NATIVE_WITNESS_BIN")}
 	evidenceDir := os.Getenv("THEMIS_NATIVE_WITNESS_EVIDENCE")
@@ -179,8 +211,6 @@ func (h *harness) prepare(label, scenario string, ceiling int) prepared {
 	if localstate.Read(filepath.Join(p.directory, "plan.json"), &p.plan) != nil {
 		h.t.Fatal("actual native plan missing")
 	}
-	p.observer = h.start(label+"-original-separate-observer", "themis-dependency", "observe", "--state", filepath.Join(h.state, "observer"), "--plan", filepath.Join(p.directory, "plan.json"), "--observations", p.observations)
-	h.ready(filepath.Join(p.observations, "ready.json"))
 	h.call(label+"-exact-independent-approval", "themis-dependency", 0, "approve-witnessed", "--directory", p.directory, "--keys", filepath.Join(h.state, "keys"), "--approve-digest", p.plan.Digest())
 	if localstate.Read(filepath.Join(p.directory, "authorization.json"), &p.authorization) != nil {
 		h.t.Fatal("test operator authority missing")
@@ -193,7 +223,12 @@ func (h *harness) prepare(label, scenario string, ceiling int) prepared {
 	policy := obs.Policy{Version: obs.PolicyVersion, Keys: []obs.TrustedWitness{{Witness: p.registration.Witness, KeyID: p.registration.KeyID, PublicKey: p.registration.PublicKey, Algorithm: evidence.Algorithm, Engine: obs.Engine, Publisher: h.publisher.Name, PublisherKeyID: h.publisher.KeyID, Scopes: []obs.Scope{obs.ExactScope(p.registration)}, NotBefore: now.Add(-time.Hour).Format(time.RFC3339Nano), NotAfter: now.Add(24 * time.Hour).Format(time.RFC3339Nano)}}}
 	p.policy = h.save(label+"-witness-policy.json", policy)
 	h.save(label+"-registration.json", p.registration)
+	// Both fixed observation windows must cover the same experiment. Preparing
+	// approval and registration first avoids spending the source window on CLI
+	// startup before the independent witness has even begun collecting.
+	p.observer = h.start(label+"-original-separate-observer", "themis-dependency", "observe", "--state", filepath.Join(h.state, "observer"), "--plan", filepath.Join(p.directory, "plan.json"), "--observations", p.observations)
 	p.witness = h.start(label+"-actual-independent-witness", "themis-native-witness", "observe", "--state", filepath.Join(h.state, "witness"), "--session", p.session, "--key-dir", p.keyDir)
+	h.ready(filepath.Join(p.observations, "ready.json"))
 	h.ready(filepath.Join(p.session, "ready.json"))
 	return p
 }

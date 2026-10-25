@@ -3,7 +3,6 @@ package nativedependency_test
 import (
 	"bytes"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"testing"
 	"time"
@@ -23,7 +22,7 @@ func TestOwnedKindEffectiveRuntimeAuthorization(t *testing.T) {
 			t.Helper()
 			args := append([]string{"--kubeconfig", filepath.Join(h.state, role, "kubeconfig"), "--context", "kind-" + owner.ClusterName, "auth", "can-i"}, arguments...)
 			start := time.Now()
-			cmd := exec.Command("rtk", append([]string{"proxy", "kubectl"}, args...)...)
+			cmd := externalCommand("kubectl", args...)
 			cmd.Env = append(os.Environ(), "DEBUG=")
 			var out, errOut bytes.Buffer
 			cmd.Stdout = &out
@@ -31,7 +30,12 @@ func TestOwnedKindEffectiveRuntimeAuthorization(t *testing.T) {
 			e := cmd.Run()
 			code := 0
 			if e != nil {
-				code = cmd.ProcessState.ExitCode()
+				code = -1
+				if cmd.ProcessState != nil {
+					code = cmd.ProcessState.ExitCode()
+				} else {
+					errOut.WriteString("launch failed: " + e.Error())
+				}
 			}
 			h.records = append(h.records, commandRecord{"kubectl", role + "-" + label, args, code, out.String(), errOut.String(), time.Since(start).Milliseconds()})
 			h.save("commands.json", h.records)

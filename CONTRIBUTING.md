@@ -1,7 +1,9 @@
 # Contributing
 
-The development scope includes the T1.2 local foundation and T2.0 dry-run
-Kubernetes projection. Read [the Kubernetes scope and real API tests](docs/kubernetes.md)
+The development scope includes the reviewed local, synthetic Kubernetes,
+disposable PostgreSQL and signed-evidence foundations. Read
+[the developer-preview scope](docs/developer-preview.md) and
+[the Kubernetes scope and real API tests](docs/kubernetes.md)
 before changing the controller. Start with the
 [README](README.md), [contract rules](docs/contracts.md) and
 [ADRs](docs/adr/README.md). Discuss changes to the contract format or verdict
@@ -21,10 +23,10 @@ Before submitting:
 ```sh
 go fmt ./...
 go vet ./...
-go test ./...
-go test -race ./...
+go test -count=1 ./...
+go test -race -count=1 ./...
 go mod verify
-go build -trimpath -o bin/ ./cmd/themis
+go build -trimpath -o bin/ ./cmd/...
 ```
 
 Run the parser/verdict fuzz commands and vulnerability audit in the README when

@@ -1,7 +1,7 @@
 param(
  [ValidateSet('up','refresh','down')][string]$Action='up',
  [string]$ClusterName='',
- [string]$CommandProxy='rtk'
+ [string]$CommandProxy=''
 )
 $ErrorActionPreference='Stop'
 $repo=Split-Path -Parent $PSScriptRoot
@@ -16,7 +16,7 @@ if($env:OS -ne 'Windows_NT'){$kind=Join-Path $repo '.cache/tools/kind'}
 $binary=Join-Path $repo '.cache/t42-work/bin/themis-dependency.exe'
 if($env:OS -ne 'Windows_NT'){$binary=Join-Path $repo '.cache/t42-work/bin/themis-dependency'}
 $encoding=[Text.UTF8Encoding]::new($false)
-function Tool([string]$Program,[string[]]$Arguments){$preference=$ErrorActionPreference;$ErrorActionPreference='Continue';try{$output=& $CommandProxy proxy $Program @Arguments;$code=$LASTEXITCODE}finally{$ErrorActionPreference=$preference};if($code -ne 0){throw "$Program exited $code"};return $output}
+function Tool([string]$Program,[string[]]$Arguments){$preference=$ErrorActionPreference;$ErrorActionPreference='Continue';try{if($CommandProxy){$output=& $CommandProxy proxy $Program @Arguments}else{$output=& $Program @Arguments};$code=$LASTEXITCODE}finally{$ErrorActionPreference=$preference};if($code -ne 0){throw "$Program exited $code"};return $output}
 function Kube([string[]]$Arguments){Tool 'kubectl' (@('--kubeconfig',$admin,'--context',$context)+$Arguments)}
 function Protect([string]$Path,[bool]$Directory){
  if($env:OS -eq 'Windows_NT'){$sid=[Security.Principal.WindowsIdentity]::GetCurrent().User;if($Directory){$acl=[Security.AccessControl.DirectorySecurity]::new();$inherit='ContainerInherit,ObjectInherit'}else{$acl=[Security.AccessControl.FileSecurity]::new();$inherit='None'};$acl.SetOwner($sid);$acl.SetAccessRuleProtection($true,$false);$acl.AddAccessRule([Security.AccessControl.FileSystemAccessRule]::new($sid,'FullControl',$inherit,'None','Allow'));Set-Acl -LiteralPath $Path -AclObject $acl}else{Tool 'chmod' @($(if($Directory){'700'}else{'600'}),$Path)|Out-Null}
@@ -24,7 +24,7 @@ function Protect([string]$Path,[bool]$Directory){
 function PrivateFile([string]$Path,[string]$Content,[bool]$Update=$false){if((Test-Path -LiteralPath $Path) -and -not $Update){throw 'Private setup file already exists'};[IO.File]::WriteAllText($Path,$Content,$encoding);if(-not $Update){Protect $Path $false};return $Path}
 function Owned {
  $o=Get-Content -LiteralPath (Join-Path $state 'bootstrap.json') -Raw|ConvertFrom-Json
- if($o.clusterName -ne $ClusterName -or $o.namespace -ne $ns -or -not $o.clusterUID -or -not $o.engineID -or (Tool 'docker' @('info','--format','{{.ID}}')) -ne $o.engineID){throw 'Complete original local engine/cluster ownership required'}
+ if($o.clusterName -ne $ClusterName -or $o.namespace -ne $ns -or -not $o.clusterUID -or -not $o.engineID -or $o.endpoint -ne $endpoint -or $o.context -ne $context -or $o.nodeID -notmatch '^[a-f0-9]{64}$' -or (Tool 'docker' @('--host',$o.endpoint,'info','--format','{{.ID}}')) -ne $o.engineID -or (Tool 'docker' @('--host',$o.endpoint,'inspect','--type','container','--format','{{.Id}}',($ClusterName+'-control-plane'))) -ne $o.nodeID){throw 'Complete original local engine/cluster ownership required'}
  if((Kube @('get','namespace','kube-system','-o','jsonpath={.metadata.uid}')) -ne $o.clusterUID){throw 'Original cluster UID changed'}
  if($o.namespaceUID -and (Kube @('get','namespace',$ns,'-o','jsonpath={.metadata.uid}')) -ne $o.namespaceUID){throw 'Original namespace UID changed'}
  return $o
@@ -36,8 +36,9 @@ $previousDockerHost=$env:DOCKER_HOST
 $previousDockerContext=$env:DOCKER_CONTEXT
 try{
  $endpoint=$env:DOCKER_HOST
- if(-not $endpoint){$selectedContext=if($env:DOCKER_CONTEXT){$env:DOCKER_CONTEXT}else{(Tool 'docker' @('context','show'))};$endpoint=Tool 'docker' @('context','inspect',$selectedContext,'--format','{{.Endpoints.docker.Host}}')}
- if($endpoint -notin @('npipe:////./pipe/docker_engine','npipe:////./pipe/dockerDesktopLinuxEngine','unix:///var/run/docker.sock','unix:///run/docker.sock')){throw 'Only an explicit local Docker named pipe or standard local Unix socket is supported'}
+ if($env:DOCKER_CONTEXT){throw 'DOCKER_CONTEXT must be empty; explicit local DOCKER_HOST required'}
+ $allowed=if($env:OS -eq 'Windows_NT'){@('npipe:////./pipe/dockerDesktopLinuxEngine')}else{@('unix:///var/run/docker.sock','unix:///run/docker.sock',('unix://'+(Join-Path $HOME '.docker/desktop/docker.sock')))}
+ if(-not $endpoint -or $endpoint -notin $allowed){throw 'Explicit admitted local Linux Docker engine endpoint required; no ambient context fallback'}
  $env:DOCKER_HOST=$endpoint;$env:DOCKER_CONTEXT=$null
  $env:GOCACHE=Join-Path $repo '.cache/go-build';$env:GOMODCACHE=Join-Path $repo '.cache/go-mod';$env:GOPATH=Join-Path $repo '.cache/go-path';$env:GOTMPDIR=Join-Path $repo '.cache/tmp'
  if($Action -eq 'down'){$null=Owned;Tool $kind @('delete','cluster','--name',$ClusterName);Write-Output 'Deleted only the original UID-verified T4.2 Kind; private records retained.';return}
@@ -54,9 +55,9 @@ try{
   $kindConfig="kind: Cluster`napiVersion: kind.x-k8s.io/v1alpha4`nnetworking: {apiServerAddress: 127.0.0.1}`nnodes:`n  - role: control-plane`n    image: kindest/node:v1.35.5@sha256:ce977ae6d65918d0b58a5f8b5e940429c2ce42fa3a5619ec2bbc60b949c0ac95`n    extraPortMappings:`n"
   $i=0;foreach($role in @('application','proxy','dependency')){$kindConfig+="      - {containerPort: $((31080+$i)), hostPort: $($ports[$role]), listenAddress: '127.0.0.1', protocol: TCP}`n";$i++}
   $configPath=PrivateFile (Join-Path $state 'kind.yaml') $kindConfig
-  $o=[ordered]@{version='themis.native-http-bootstrap/v1alpha1';clusterName=$ClusterName;namespace=$ns;clusterUID='';namespaceUID='';previousClusters=$existing;ports=$ports;installerKey=$keys.InstallerKey;approverKey=$keys.ApproverKey;image='';engineID=(Tool 'docker' @('info','--format','{{.ID}}'))};SaveOwner $o
+  $o=[ordered]@{version='themis.native-http-bootstrap/v1alpha1';clusterName=$ClusterName;namespace=$ns;clusterUID='';namespaceUID='';previousClusters=$existing;ports=$ports;installerKey=$keys.InstallerKey;approverKey=$keys.ApproverKey;image='';endpoint=$endpoint;context=$context;nodeID='';engineID=(Tool 'docker' @('info','--format','{{.ID}}'))};SaveOwner $o
   Tool $kind @('create','cluster','--name',$ClusterName,'--config',$configPath,'--kubeconfig',$admin,'--wait','120s');Protect $admin $false
-  $o.clusterUID=Kube @('get','namespace','kube-system','-o','jsonpath={.metadata.uid}');SaveOwner $o
+  $o.clusterUID=Kube @('get','namespace','kube-system','-o','jsonpath={.metadata.uid}');$o.nodeID=Tool 'docker' @('--host',$endpoint,'inspect','--type','container','--format','{{.Id}}',($ClusterName+'-control-plane'));if($o.nodeID -notmatch '^[a-f0-9]{64}$'){throw 'Original node ID required'};SaveOwner $o
   $namespacePath=PrivateFile (Join-Path $state 'namespace.yaml') "apiVersion: v1`nkind: Namespace`nmetadata:`n  name: $ns`n  labels: {themis.dev/native-dependency: owned-synthetic, pod-security.kubernetes.io/enforce: restricted}`n"
   $null=Owned;Kube @('create','-f',$namespacePath)
   $o.namespaceUID=Kube @('get','namespace',$ns,'-o','jsonpath={.metadata.uid}');SaveOwner $o

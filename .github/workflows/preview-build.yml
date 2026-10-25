@@ -1,0 +1,41 @@
+name: Developer preview build review
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      GOENV: 'off'
+      GOWORK: 'off'
+      GOTOOLCHAIN: local
+      GOFLAGS: -mod=readonly
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+          cache: false
+      - name: Fetch and verify exact dependencies
+        run: |
+          go version
+          go mod download
+          go mod verify
+          go mod tidy -diff
+      - name: Build twice from independent source and cache directories
+        run: python scripts/build-preview.py --output "${{ runner.temp }}/themis-preview"
+      - name: Retain candidate binaries and checksums for review
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: developer-preview-review-${{ github.sha }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/themis-preview/
+          retention-days: 7
+          if-no-files-found: error
+          include-hidden-files: false

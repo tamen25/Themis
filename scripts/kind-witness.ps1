@@ -1,7 +1,7 @@
 param(
  [ValidateSet('up','install','down')][string]$Action='up',
  [string]$ClusterName='',
- [string]$CommandProxy='rtk'
+ [string]$CommandProxy=''
 )
 $ErrorActionPreference='Stop'
 $repository=Split-Path -Parent $PSScriptRoot
@@ -13,7 +13,7 @@ $runnerState=Join-Path $repository ('.themis/'+$ClusterName)
 $witnessState=Join-Path $repository ('.themis/witness-'+$ClusterName)
 $adminConfig=Join-Path $runnerState 'admin-kubeconfig';$context='kind-'+$ClusterName
 $encoding=[Text.UTF8Encoding]::new($false)
-function Tool([string]$Program,[string[]]$Arguments){$preference=$ErrorActionPreference;$ErrorActionPreference='Continue';try{$output=& $CommandProxy proxy $Program @Arguments;$code=$LASTEXITCODE}finally{$ErrorActionPreference=$preference};if($code -ne 0){throw "$Program exited $code"};return $output}
+function Tool([string]$Program,[string[]]$Arguments){$preference=$ErrorActionPreference;$ErrorActionPreference='Continue';try{if($CommandProxy){$output=& $CommandProxy proxy $Program @Arguments}else{$output=& $Program @Arguments};$code=$LASTEXITCODE}finally{$ErrorActionPreference=$preference};if($code -ne 0){throw "$Program exited $code"};return $output}
 function Kube([string[]]$Arguments){Tool 'kubectl' (@('--kubeconfig',$adminConfig,'--context',$context)+$Arguments)}
 function Guard {
  $owner=Get-Content -LiteralPath (Join-Path $runnerState 'execution-owner.json') -Raw|ConvertFrom-Json

@@ -68,7 +68,7 @@ func TestOwnedKindSignedWitnessActualDependencyOutage(t *testing.T) {
 	// run. The retained history above stays unchanged.
 	h.killOriginalTask(c, "restore-by-restarting-only-original-proxy", p.plan.Binding.Target.Proxy)
 	h.save("restoration-new-proxy-identity.json", h.waitReplacement(conn, p.plan.Binding.Target.Proxy.Process))
-	h.external("explicit-owned-restoration-rebind", "powershell", 0, "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", filepath.Join(h.repo, "scripts", "kind-native-witness.ps1"), "-Action", "refresh", "-ClusterName", c.Owner.ClusterName, "-CommandProxy", "rtk")
+	h.external("explicit-owned-restoration-rebind", powershellProgram(), 0, refreshArgs(filepath.Join(h.repo, "scripts", "kind-native-witness.ps1"), c.Owner.ClusterName)...)
 	t.Log("REAL KIND original dependency task killed; independent expiry held, signed unavailable application traffic produced no recovery PASS; later explicit owned rebind was a separate current-state restoration")
 }
 
@@ -91,6 +91,6 @@ func TestOwnedKindProxyReplacementAfterReadyBeforeApply(t *testing.T) {
 	h.save("pre-Apply-old-authority-denied.json", reply)
 	_, _ = h.wait(p.observer)
 	_, _ = h.wait(p.witness)
-	h.external("explicit-owned-pre-Apply-rebind", "powershell", 0, "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", filepath.Join(h.repo, "scripts", "kind-native-witness.ps1"), "-Action", "refresh", "-ClusterName", c.Owner.ClusterName, "-CommandProxy", "rtk")
+	h.external("explicit-owned-pre-Apply-rebind", powershellProgram(), 0, refreshArgs(filepath.Join(h.repo, "scripts", "kind-native-witness.ps1"), c.Owner.ClusterName)...)
 	t.Logf("REAL KIND proxy replaced after signed READY before Apply; old runner exit=%d; new boot signed denial and did not inherit invocation", code)
 }

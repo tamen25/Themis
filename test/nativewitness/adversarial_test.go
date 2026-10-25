@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	adapter "github.com/tamen25/themis/internal/dependencyexperiment"
 	"github.com/tamen25/themis/internal/evidencesource"
 	"github.com/tamen25/themis/internal/localstate"
 	"github.com/tamen25/themis/pkg/evidence"
@@ -155,4 +156,40 @@ func TestOwnedKindSignedWitnessCancellationPreservesSource(t *testing.T) {
 		t.Fatal("signed healthy recovery upgraded canceled source", check)
 	}
 	t.Log("REAL KIND canceled original execution remains INCONCLUSIVE despite independently signed effect/recovery")
+}
+
+func TestOwnedKindEarlyCancellationWithInterruptedSourceObserver(t *testing.T) {
+	h := newHarness(t)
+	p := h.prepare("early-cancel", "delay", 500)
+	// Both independent observers reached their original READY boundary. Losing
+	// the unsigned observer must not turn its missing samples into a claim that
+	// the independently signed witness observed no effect.
+	if err := p.observer.cmd.Process.Kill(); err != nil {
+		t.Fatal(err)
+	}
+	if _, code := h.wait(p.observer); code == 0 {
+		t.Fatal("original source observer was not terminated")
+	}
+	runner := h.runner("early-cancel-original-runner", p)
+	h.active(p, h.proxy())
+	h.effect(p, 3)
+	h.call("early-cancel-original-stop", "themis-dependency", 0, "cancel", "--state", filepath.Join(h.state, "runner"), "--directory", p.directory)
+	raw, code := h.wait(runner)
+	var report adapter.Report
+	if code != 9 || json.Unmarshal(raw, &report) != nil || report.Execution != "CANCELLED" || report.Verdict != "INCONCLUSIVE" || report.Evaluation.Effects >= 3 {
+		t.Fatal("interrupted source coverage or cancellation was rewritten", code, string(raw))
+	}
+	if _, code := h.wait(p.witness); code != 0 {
+		t.Fatal("independent witness did not complete", code)
+	}
+	result, _ := h.publish("early-cancel", p, "", 8)
+	f := result.NativeObservationCorroboration
+	if result.Evidence.SourceChecks.Status != "PASSED" || f.SignatureChain != "VALID" || f.WitnessTrust != "TRUSTED" || f.Effects < 3 || f.Status != "OBSERVATIONS_INCOMPLETE" || f.RunnerCorrelation != "MATCHED" {
+		t.Fatal("genuine independent coverage contradicted an uncertain canceled source", result)
+	}
+	h.save("early-cancel-coverage.json", struct {
+		SourceEffects, WitnessEffects int
+		SourceExecution, Candidate    string
+	}{report.Evaluation.Effects, f.Effects, report.Execution, report.Verdict})
+	t.Logf("REAL KIND terminated original source observer after READY; sourceEffects=%d witnessEffects=%d; signed cancellation and whole-execution INCONCLUSIVE preserved", report.Evaluation.Effects, f.Effects)
 }

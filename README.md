@@ -1,5 +1,9 @@
 # Themis
 
+The [developer-preview candidate guide](docs/developer-preview.md) covers platform
+qualification, attributable two-build packaging, external trust and remaining
+release gates. This is not production support or an independently attested run.
+
 T4.2 adds one [native bounded HTTP dependency experiment](docs/native-dependency.md):
 a real application calls a fixed proxy and separate synthetic dependency. The
 proxy enforces exact boot/target approval, once-only application and independent
@@ -60,7 +64,7 @@ demonstrations, authorization boundaries and evidence limitations.
 
 ## Build and use
 
-Requires Go 1.26.9 or newer. The local CLI needs no cluster, cloud account,
+Requires Go 1.26.10 or newer. The local CLI needs no cluster, cloud account,
 database, Docker, Argus or Arete. The first build downloads the pinned Go modules; Go's automatic
 toolchain selection may also download the required Go patch release.
 

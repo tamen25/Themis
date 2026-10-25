@@ -13,3 +13,13 @@ inventory is included. These are development measurements, not claims of a final
 release or independent hardware/machine attestation. Final milestone evidence is
 collected separately against the frozen source. The external execution evidence
 retains source snapshots, exact child exits and fixture provenance hashes.
+
+## Early cancellation with different independent coverage
+
+`native-early-cancel` preserves an additional real signed development run. The
+source was CANCELLED/INCONCLUSIVE with two qualifying effect samples; the separate
+witness recorded three and later recovered traffic. Insufficient source coverage
+does not assert that no effect occurred. Verification must preserve the uncertain
+source, rather than classify that sampling difference as a contradiction or
+upgrade the source to PASS. The original bundle and external policies are retained
+unchanged; regression tests use their explicit historical verifier time.

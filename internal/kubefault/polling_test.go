@@ -11,13 +11,25 @@ import (
 func TestStatusPollingCapacityCannotBlockCleanup(t *testing.T) {
 	for _, action := range []string{"remove", "expire"} {
 		t.Run(action, func(t *testing.T) {
-			_, client, auth, _ := setup(t, "healthy")
+			_, client, auth, approver := setup(t, "healthy")
 			ctx := context.Background()
 			for i := 0; i < 4095; i++ {
 				if _, err := client.Control(ctx, auth, "status"); err != nil {
 					t.Fatalf("poll %d: %v", i, err)
 				}
 			}
+			// The status budget is server-wide. Race instrumentation can consume
+			// the original 20s Apply window while filling it. Explicitly approve a
+			// new invocation now; do not renew a consumed invocation or deadline.
+			plan := auth.Grant.Plan
+			fresh, err := Approve(plan, plan.Digest(), approver, time.Now())
+			if err != nil {
+				t.Fatal(err)
+			}
+			if fresh.Grant.InvocationID == auth.Grant.InvocationID {
+				t.Fatal("new approval reused the polled invocation")
+			}
+			auth = fresh
 			applied, err := client.Control(ctx, auth, "apply")
 			if err != nil || !applied.Active {
 				t.Fatal("status polling prevented first authorized Apply", err)

@@ -27,7 +27,28 @@ func protect(path string, dir bool) error {
 	if err != nil {
 		return err
 	}
-	return windows.SetNamedSecurityInfo(path, windows.SE_FILE_OBJECT, windows.DACL_SECURITY_INFORMATION|windows.PROTECTED_DACL_SECURITY_INFORMATION, nil, nil, acl, nil)
+	u, err := windows.GetCurrentProcessToken().GetTokenUser()
+	if err != nil {
+		return err
+	}
+	actual, err := windows.GetNamedSecurityInfo(path, windows.SE_FILE_OBJECT, windows.OWNER_SECURITY_INFORMATION)
+	if err != nil {
+		return err
+	}
+	owner, _, err := actual.Owner()
+	if err != nil {
+		return err
+	}
+	flags := windows.SECURITY_INFORMATION(windows.DACL_SECURITY_INFORMATION | windows.PROTECTED_DACL_SECURITY_INFORMATION)
+	// Elevated Windows tokens may create files owned by Administrators. Pin the
+	// freshly created state to the same user that checkPrivate requires. Avoid
+	// requesting WRITE_OWNER when the existing owner is already correct.
+	var newOwner *windows.SID
+	if !owner.Equals(u.User.Sid) {
+		flags |= windows.OWNER_SECURITY_INFORMATION
+		newOwner = u.User.Sid
+	}
+	return windows.SetNamedSecurityInfo(path, windows.SE_FILE_OBJECT, flags, newOwner, nil, acl, nil)
 }
 func checkPrivate(path string, info os.FileInfo) error {
 	want, err := ownerSD(info.IsDir())

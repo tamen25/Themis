@@ -70,6 +70,18 @@ func TestActualNativeHistoriesKeepDistinctFindings(t *testing.T) {
 		})
 	}
 }
+
+func TestEarlySignedCancellationDoesNotClaimAbsenceOfEffect(t *testing.T) {
+	b, p, w, now := nativeHistory(t, "early-cancel")
+	r, err := evidenceverify.VerifyNative(bytes.NewReader(b), int64(len(b)), &p, &w, now)
+	if err != nil {
+		t.Fatal(err)
+	}
+	f := r.NativeObservationCorroboration
+	if r.Evidence.SourceChecks.Status != "PASSED" || r.Evidence.Source.Execution != "CANCELLED" || r.Evidence.Source.CandidateVerdict != "INCONCLUSIVE" || f.Status != "OBSERVATIONS_INCOMPLETE" || f.RunnerCorrelation != "MATCHED" || f.Effects < 3 || f.ApplicationVerdict != "PASS" || f.SignatureChain != "VALID" || f.WitnessTrust != "TRUSTED" || r.Evidence.TrustedExecutionVerdict != "INCONCLUSIVE" || f.TrustedExecutionVerdict != "INCONCLUSIVE" {
+		t.Fatal("independent effect coverage contradicted an uncertain canceled source", r)
+	}
+}
 func TestNativeOfflineMappingsRejectAlteredClaimsChainsAndCrossRunRecords(t *testing.T) {
 	for _, kind := range []string{"source-verdict", "source-cancellation", "source-phase-order", "signature", "duplicate", "reordered", "missing-middle", "torn-tail", "cross-run-witness", "unsupported-mapping"} {
 		t.Run(kind, func(t *testing.T) {
@@ -164,6 +176,32 @@ func TestPublisherCannotHideActualSignedCancellation(t *testing.T) {
 	f := evidencesource.CorroborateNative(o, &w, now)
 	if o.Result.SourceChecks.Status != "FAILED" || f.Status != "OBSERVATIONS_CONTRADICTORY" || f.SignatureChain != "VALID" || f.WitnessTrust != "TRUSTED" || f.TrustedExecutionVerdict != "INCONCLUSIVE" {
 		t.Fatal("public source edits hid actual cancellation", o.Result.SourceChecks, f)
+	}
+}
+
+func TestPublisherCannotUpgradeUncertainOrFailingNativeHistory(t *testing.T) {
+	for _, name := range []string{"early-cancel", "fail", "no-effect", "cleanup-pending"} {
+		t.Run(name, func(t *testing.T) {
+			b, p, w, now := nativeHistory(t, name)
+			o, err := evidenceverify.Verify(bytes.NewReader(b), int64(len(b)), &p, now)
+			if err != nil {
+				t.Fatal(err)
+			}
+			var result evidencesource.NativeResult
+			if json.Unmarshal(o.Artifacts["artifacts/native-result.json"], &result) != nil || result.Report == nil {
+				t.Fatal("missing authentic source result")
+			}
+			result.Report.Execution = "SUCCEEDED"
+			result.Report.Verdict = "PASS"
+			result.Report.Cleanup = "COMPLETE"
+			result.Report.Evaluation.Effects = 3
+			o.Artifacts["artifacts/native-result.json"] = wire.JSON(result)
+			evidencesource.Check(&o)
+			f := evidencesource.CorroborateNative(o, &w, now)
+			if o.Result.SourceChecks.Status != "FAILED" || f.Status != "OBSERVATIONS_CONTRADICTORY" || f.TrustedExecutionVerdict != "INCONCLUSIVE" || o.Result.TrustedExecutionVerdict != "INCONCLUSIVE" {
+				t.Fatal("publisher edits upgraded original signed uncertainty or failure", o.Result.SourceChecks, f)
+			}
+		})
 	}
 }
 

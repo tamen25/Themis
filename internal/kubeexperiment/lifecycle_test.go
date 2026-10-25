@@ -127,8 +127,11 @@ func TestCancellationAtEachDurableLifecycleBoundary(t *testing.T) {
 				t.Fatal(finished.err)
 			}
 			if phase == "FINAL" {
-				if !receipt.Action.AlreadyFinalized || finished.report.Verdict != result.Pass {
-					t.Fatal("late action rewrote historical PASS", finished.report.Unknowns)
+				if receipt.Action == nil || !receipt.Action.AlreadyFinalized {
+					t.Fatalf("late action was not classified after FINAL: action=%+v execution=%s verdict=%s unknowns=%v", receipt.Action, finished.report.Execution, finished.report.Verdict, finished.report.Unknowns)
+				}
+				if finished.report.Verdict != result.Pass {
+					t.Fatalf("original healthy run did not establish PASS: execution=%s candidate=%s cleanup=%s assertions=%+v unknowns=%v", finished.report.Execution, finished.report.CandidateVerdict, finished.report.Cleanup, finished.report.Assertions, finished.report.Unknowns)
 				}
 			} else if receipt.Action.AlreadyFinalized || finished.report.Verdict == result.Pass || !finished.report.CancellationAccepted || finished.report.Execution != result.Cancelled {
 				t.Fatal("accepted cancellation did not prevent PASS", finished.report.Execution, finished.report.Unknowns)

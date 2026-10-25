@@ -11,7 +11,7 @@ cloud, Kubernetes, physical backup, PITR or failover interface.
 
 ## Build and run
 
-Requires Go 1.26.9, Docker CLI and a local Linux Docker engine with linux/amd64
+Requires Go 1.26.10, Docker CLI and a local Linux Docker engine with linux/amd64
 support. Supported endpoints are the Docker Desktop Linux named pipe on Windows,
 or `/var/run/docker.sock`, `/run/docker.sock` and the current user's
 `.docker/desktop/docker.sock` on Unix. TCP and SSH endpoints are rejected,

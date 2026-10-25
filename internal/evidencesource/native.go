@@ -357,7 +357,10 @@ func CorroborateNative(o evidence.Opened, policy *obs.Policy, now time.Time) obs
 	f.RunnerCorrelation = "MATCHED"
 	if v.result.Report != nil && f.Complete {
 		r := v.result.Report
-		if (r.Evaluation.Effects >= 3) != (f.Effects >= 3) || r.Verdict == "PASS" && f.ApplicationVerdict == "FAIL" || r.Verdict == "FAIL" && f.ApplicationVerdict == "PASS" {
+		// Insufficient source samples do not assert that no effect occurred.
+		// Independent witness coverage can exceed a canceled source's coverage;
+		// the original uncertain result is preserved below, never upgraded.
+		if r.Evaluation.Effects >= 3 && f.Effects < 3 || r.Verdict == "PASS" && f.ApplicationVerdict == "FAIL" || r.Verdict == "FAIL" && f.ApplicationVerdict == "PASS" {
 			f.Status = "OBSERVATIONS_CONTRADICTORY"
 			f.RunnerCorrelation = "INVALID"
 			f.Problems = append(f.Problems, "SOURCE_WITNESS_EFFECT_OR_APPLICATION_DISAGREEMENT")
